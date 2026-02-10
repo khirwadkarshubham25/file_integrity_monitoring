@@ -15,7 +15,6 @@ class Baseline(models.Model):
     HASH_ALGORITHM_CHOICES = [
         ('sha256', 'SHA256'),
         ('sha512', 'SHA512'),
-        ('blake3', 'BLAKE3'),
     ]
 
     id = models.BigAutoField(primary_key=True)
@@ -70,7 +69,6 @@ class BaselineFile(models.Model):
     # Hashes
     sha256 = models.CharField(max_length=64, db_index=True)
     sha512 = models.CharField(max_length=128, blank=True, null=True)
-    blake3 = models.CharField(max_length=64, blank=True, null=True)
 
     # File metadata
     file_size = models.BigIntegerField()

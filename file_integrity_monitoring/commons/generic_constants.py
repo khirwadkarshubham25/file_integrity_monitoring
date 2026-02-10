@@ -54,3 +54,6 @@ class GenericConstants:
     WHITELIST_RULE_CREATE_SUCCESSFUL_MESSAGE = "Whitelist rule created successfully"
     WHITELIST_RULE_UPDATE_SUCCESSFUL_MESSAGE = "Whitelist rule updated successfully"
     WHITELIST_RULE_DELETE_SUCCESSFUL_MESSAGE = "Whitelist rule deleted successfully"
+
+    SYNC_FILE_THRESHOLD = 5000
+    CHUNK_SIZE = 8192

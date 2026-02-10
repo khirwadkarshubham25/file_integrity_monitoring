@@ -14,7 +14,7 @@ class CreateFileChangesAcknowledgeService(MonitoringServiceHelper):
     def get_request_params(self, *args, **kwargs):
         data = kwargs.get("data")
         return {
-            "change_id": data.get("change_id"),
+            "change_id": data.get("file_change_id"),
             "acknowledged_reason": data.get("acknowledged_reason", ""),
             "user_id": data.get("user_id")
         }

@@ -31,7 +31,7 @@ class FileChanges(View):
     """Render file changes page"""
 
     def get(self, request, *args, **kwargs):
-        return render(request, 'file_changes.html')
+        return render(request, 'files_changes.html')
 
 
 class Alerts(View):
@@ -161,7 +161,6 @@ class FileChangeDetailsView(View):
 class FileChangeAcknowledgeView(View):
     def post(self, request, *args, **kwargs):
         data = json.loads(request.body)
-        data['user_id'] = request.user.id if hasattr(request, 'user') else None
 
         kwargs.update({'data': data})
         service_obj = ViewServices(service_name='acknowledge_file_change')

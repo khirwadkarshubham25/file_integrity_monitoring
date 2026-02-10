@@ -1,5 +1,6 @@
 import hashlib
 import os
+import traceback
 
 from django.utils import timezone
 from rest_framework import status
@@ -137,14 +138,6 @@ class MonitoringSessionService(MonitoringServiceHelper):
             }
 
     def _scan_and_compare(self, baseline, monitor_type, user_id):
-        """
-        Scan directory and compare files against baseline.
-
-        Scan Types:
-        - full: Scan all files, calculate hashes, detect all changes
-        - incremental: Scan only recently modified files
-        - quick: Compare file size and mtime only (no hashing)
-        """
         results = {
             'files_scanned': 0,
             'changes_found': 0,
@@ -159,13 +152,9 @@ class MonitoringSessionService(MonitoringServiceHelper):
             # Get baseline files for comparison
             baseline_files = BaselineFile.objects.filter(baseline=baseline)
             baseline_files = {bf.file_path: bf for bf in baseline_files}
-            print(baseline_files)
-            # Track which baseline files we found (for detecting deletions)
             found_baseline_files = set()
 
-            # Walk directory and scan files based on type
             for root, dirs, files in os.walk(baseline.path):
-                # Filter excluded directories
                 dirs[:] = [d for d in dirs if not self._should_exclude(
                     os.path.join(root, d),
                     baseline.exclude_patterns
@@ -175,7 +164,6 @@ class MonitoringSessionService(MonitoringServiceHelper):
                 for file in files:
                     file_path = os.path.join(root, file)
 
-                    # Skip excluded files
                     if self._should_exclude(file_path, baseline.exclude_patterns):
                         continue
 
@@ -204,8 +192,6 @@ class MonitoringSessionService(MonitoringServiceHelper):
                             file_path=file_path,
                             baseline=baseline,
                             change_type='added',
-                            previous_hash=None,
-                            current_hash=None,
                             severity='medium',
                             user_id=user_id
                         )
@@ -223,8 +209,6 @@ class MonitoringSessionService(MonitoringServiceHelper):
                         file_path=file_path,
                         baseline=baseline,
                         change_type='deleted',
-                        previous_hash=baseline_file.sha256,
-                        current_hash=None,
                         severity='high',
                         user_id=user_id
                     )
@@ -270,8 +254,6 @@ class MonitoringSessionService(MonitoringServiceHelper):
                         file_path=file_path,
                         baseline=baseline,
                         change_type='modified',
-                        previous_hash=baseline_file.sha256,
-                        current_hash=None,  # Not calculated in quick scan
                         severity=severity,
                         user_id=user_id
                     )
@@ -292,15 +274,23 @@ class MonitoringSessionService(MonitoringServiceHelper):
                         file_path=file_path,
                         baseline=baseline,
                         change_type='modified',
-                        previous_hash=baseline_file.sha256,
-                        current_hash=current_hash,
                         severity='critical',
                         user_id=user_id
                     )
                     return change
 
-            # FULL SCAN: Always calculate hash and compare
             else:  # monitor_type == 'full'
+                if current_permissions != baseline_file.permissions:
+                    change = self._create_file_change(
+                        file_path=file_path,
+                        baseline=baseline,
+                        change_type='permission',
+                        severity='medium',
+                        user_id=user_id
+                    )
+                    return change
+
+
                 current_hash = self._calculate_hash(file_path, baseline.algorithm_type)
 
                 # Check for hash change
@@ -309,22 +299,7 @@ class MonitoringSessionService(MonitoringServiceHelper):
                         file_path=file_path,
                         baseline=baseline,
                         change_type='modified',
-                        previous_hash=baseline_file.sha256,
-                        current_hash=current_hash,
                         severity='critical',
-                        user_id=user_id
-                    )
-                    return change
-
-                # Check for permission changes
-                if current_permissions != baseline_file.permissions:
-                    change = self._create_file_change(
-                        file_path=file_path,
-                        baseline=baseline,
-                        change_type='permission',
-                        previous_hash=baseline_file.sha256,
-                        current_hash=current_hash,
-                        severity='medium',
                         user_id=user_id
                     )
                     return change
@@ -334,7 +309,7 @@ class MonitoringSessionService(MonitoringServiceHelper):
 
         return None
 
-    def _create_file_change(self, file_path, baseline, change_type, previous_hash, current_hash, severity, user_id):
+    def _create_file_change(self, file_path, baseline, change_type, severity, user_id):
         """Create FileChange record and associated alert"""
         try:
             # Check if FileChange already exists for this file
@@ -346,9 +321,6 @@ class MonitoringSessionService(MonitoringServiceHelper):
             ).first()
 
             if existing_change:
-                # Update existing change
-                existing_change.previous_hash = previous_hash or existing_change.previous_hash
-                existing_change.current_hash = current_hash or existing_change.current_hash
                 existing_change.severity = severity
                 existing_change.save()
                 file_change = existing_change
@@ -358,8 +330,6 @@ class MonitoringSessionService(MonitoringServiceHelper):
                     baseline=baseline,
                     file_path=file_path,
                     change_type=change_type,
-                    previous_hash=previous_hash,
-                    current_hash=current_hash,
                     severity=severity,
                     acknowledged=False,
                     user_id=user_id
@@ -367,13 +337,14 @@ class MonitoringSessionService(MonitoringServiceHelper):
 
             # Create alert for this change
             alert_service = CreateAlertService()
-            status_code, response = alert_service.execute_service(
+            response = alert_service.execute_service(
                 data={'change_id': file_change.id, 'user_id': user_id}
             )
 
             return file_change
 
         except Exception as e:
+            traceback.print_exc()
             print(f"Error creating file change for {file_path}: {str(e)}")
             return None
 
