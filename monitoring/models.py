@@ -135,8 +135,9 @@ class FileChange(models.Model):
     detected_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     acknowledged = models.BooleanField(default=False)
-    acknowledged_by = models.ForeignKey(Users, on_delete=models.SET_NULL, null=True, blank=True)
-    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    user = models.ForeignKey(Users, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
     acknowledged_reason = models.TextField(blank=True)
 
     metadata = JSONField(default=dict, blank=True)
@@ -155,8 +156,7 @@ class FileChange(models.Model):
     def acknowledge(self, user, reason=''):
         """Mark change as acknowledged"""
         self.acknowledged = True
-        self.acknowledged_by = user
-        self.acknowledged_at = timezone.now()
+        self.user = user
         self.acknowledged_reason = reason
         self.save()
 
@@ -181,10 +181,11 @@ class Alert(models.Model):
     change_type = models.CharField(max_length=50)
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
     sent_at = models.DateTimeField(null=True, blank=True)
 
     read = models.BooleanField(default=False)
-    read_by = models.ManyToManyField(Users, related_name='read_alerts', blank=True)
+    user = models.ManyToManyField(Users, related_name='read_alerts', blank=True)
 
     alert_channels = JSONField(default=list)  # ['email', 'slack', 'in_app']
     is_archived = models.BooleanField(default=False)
@@ -204,7 +205,7 @@ class Alert(models.Model):
     def mark_as_read(self, user):
         """Mark alert as read by user"""
         self.read = True
-        self.read_by.add(user)
+        self.user.add(user)
         self.save()
 
 
@@ -221,7 +222,8 @@ class MonitoringSession(models.Model):
 
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField(null=True, blank=True)
-
+    monitor_type = models.CharField(max_length=20, default="full")
+    description = models.TextField(blank=True, null=True)
     files_scanned = models.PositiveIntegerField(default=0)
     files_changed = models.PositiveIntegerField(default=0)
     files_critical = models.PositiveIntegerField(default=0)
@@ -231,7 +233,9 @@ class MonitoringSession(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='running')
     error_message = models.TextField(blank=True, null=True)
 
-    created_by = models.ForeignKey(Users, on_delete=models.SET_NULL, null=True, blank=True)
+    user = models.ForeignKey(Users, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
     metadata = JSONField(default=dict, blank=True)
 
     class Meta:
@@ -268,8 +272,9 @@ class WhitelistRule(models.Model):
     reason = models.TextField(blank=True)
     active = models.BooleanField(default=True)
 
-    created_by = models.ForeignKey(Users, on_delete=models.PROTECT)
+    user = models.ForeignKey(Users, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     expires_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:

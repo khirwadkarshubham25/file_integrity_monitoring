@@ -375,11 +375,8 @@
                         localStorage.setItem('admin_user_id', data.user_id);
                         window.location.href = '/accounts/users';
                     } else {
-                        // Redirect to other app templates based on role_id
-                        // TODO: Update with actual redirect URLs based on role_id
-                        // For now, redirect to users page
                         localStorage.setItem('user_id', data.user_id);
-                        window.location.href = '/accounts/users';
+                        window.location.href = '/monitoring/dashboard';
                     }
                 } else {
                     alert('Login failed: ' + (data.message || 'Unknown error'));

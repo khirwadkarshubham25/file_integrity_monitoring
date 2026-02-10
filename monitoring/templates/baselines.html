@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baselines - File Integrity Monitoring</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #27ae60;
+            --danger-color: #ef4444;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            padding: 15px 30px;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 22px;
+            color: white !important;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            border-bottom: 2px solid white;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .btn-logout {
+            background: var(--danger-color);
+            border: 1px solid #dc2626;
+        }
+
+        .btn-logout:hover {
+            background: #dc2626;
+            border-color: #b91c1c;
+        }
+
+        .container-fluid {
+            padding: 40px 30px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title h1 {
+            font-weight: 700;
+            font-size: 32px;
+            color: #333;
+            margin: 0 0 8px 0;
+        }
+
+        .page-title p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            cursor: pointer;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .search-filter-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.15);
+            outline: none;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        table {
+            width: 100%;
+            margin: 0;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        th {
+            padding: 20px;
+            text-align: left;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        td {
+            padding: 18px 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-action:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--secondary-color);
+        }
+
+        .btn-delete {
+            color: var(--danger-color);
+        }
+
+        .btn-delete:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+            padding: 20px;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            color: #333;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pagination button:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .pagination button.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(0,0,0,0.5) !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            z-index: 1000 !important;
+            padding: 20px !important;
+            overflow: auto !important;
+        }
+
+        .modal-overlay > div {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease-out;
+            margin: auto;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-overlay input:focus,
+        .modal-overlay textarea:focus {
+            border-color: #667eea !important;
+            box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.15) !important;
+            outline: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .search-filter-section {
+                flex-direction: column;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .navbar-custom {
+                padding: 12px 20px;
+            }
+
+            th, td {
+                padding: 12px;
+                font-size: 12px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar-custom">
+        <div class="container-fluid" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 30px;">
+                <a class="navbar-brand" href="/monitoring/dashboard" style="margin: 0;"><i class="fas fa-shield-alt"></i> FIM System</a>
+                <div class="nav-links">
+                    <a href="/monitoring/dashboard" class="nav-link">
+                        <i class="fas fa-chart-line"></i> Dashboard
+                    </a>
+                    <a href="/monitoring/baselines" class="nav-link active">
+                        <i class="fas fa-folder"></i> Baselines
+                    </a>
+                    <a href="/monitoring/alerts" class="nav-link">
+                        <i class="fas fa-bell"></i> Alerts
+                    </a>
+                    <a href="/monitoring/file-changes" class="nav-link">
+                        <i class="fas fa-file-alt"></i> File Changes
+                    </a>
+                    <a href="/monitoring/monitoring-sessions" class="nav-link">
+                        <i class="fas fa-cogs"></i> Sessions
+                    </a>
+                    <a href="/monitoring/whitelist-rules" class="nav-link">
+                        <i class="fas fa-shield-alt"></i> Rules
+                    </a>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="nav-btn" id="profileBtn">
+                    <i class="fas fa-user-circle"></i> Profile
+                </button>
+                <button class="nav-btn" id="settingsBtn">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+                <button class="nav-btn btn-logout" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-title">
+                <h1><i class="fas fa-folder"></i> Baselines</h1>
+                <p>Manage File Integrity Monitoring Baselines</p>
+            </div>
+            <button class="btn-add" id="addBaselineBtn">
+                <i class="fas fa-plus"></i> Add Baseline
+            </button>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <!-- Search & Filter Section -->
+        <div class="search-filter-section">
+            <div class="search-box">
+                <label for="searchInput">Search Baseline</label>
+                <input type="text" id="searchInput" placeholder="Search by name..." onkeyup="searchBaselines()">
+            </div>
+            <button class="btn-add" style="margin: 0;" id="refreshBtn">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-spinner" id="loadingState">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Table Content -->
+        <div id="baselinesContent" style="display: none;">
+            <div class="table-container">
+                <table id="baselinesTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Path</th>
+                            <th>Algorithm</th>
+                            <th>Status</th>
+                            <th>Monitoring</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                                No baselines found
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="paginationContainer" style="display: none;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuration
+        const API_ENDPOINT = '/monitoring/api/baselines';
+        let currentPage = 1;
+        let allBaselines = [];
+        let filteredBaselines = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBaselines();
+            setupEventListeners();
+        });
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('profileBtn').addEventListener('click', function() {
+                alert('Profile functionality - Coming soon');
+            });
+            document.getElementById('settingsBtn').addEventListener('click', function() {
+                alert('Settings functionality - Coming soon');
+            });
+            document.getElementById('addBaselineBtn').addEventListener('click', function() {
+                openCreateBaselineModal();
+            });
+            document.getElementById('refreshBtn').addEventListener('click', loadBaselines);
+        }
+
+        // Load Baselines Data (GET - GetBaselineService)
+        function loadBaselines() {
+            const loadingState = document.getElementById('loadingState');
+            const baselinesContent = document.getElementById('baselinesContent');
+            const errorMessage = document.getElementById('errorMessage');
+
+            loadingState.style.display = 'flex';
+            baselinesContent.style.display = 'none';
+            errorMessage.style.display = 'none';
+
+            const apiToken = localStorage.getItem('api_token');
+
+            // Call GetBaselineService endpoint (without trailing slash)
+            fetch(API_ENDPOINT + '?page_size=100', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + apiToken
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load baselines');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // GetBaselineService response structure
+                allBaselines = data.baselines || [];
+                filteredBaselines = [...allBaselines];
+                displayBaselines();
+                loadingState.style.display = 'none';
+                baselinesContent.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Failed to load baselines: ' + error.message);
+                loadingState.style.display = 'none';
+            });
+        }
+
+        // Display Baselines in Table
+        function displayBaselines() {
+            const tableBody = document.getElementById('tableBody');
+
+            if (filteredBaselines.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                            No baselines found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const getStatusBadgeColor = (status) => {
+                switch(status) {
+                    case 'active': return '#d4edda';
+                    case 'inactive': return '#f8d7da';
+                    case 'pending': return '#fff3cd';
+                    case 'archived': return '#e2e3e5';
+                    default: return '#e3f2fd';
+                }
+            };
+
+            const getStatusTextColor = (status) => {
+                switch(status) {
+                    case 'active': return '#155724';
+                    case 'inactive': return '#721c24';
+                    case 'pending': return '#856404';
+                    case 'archived': return '#383d41';
+                    default: return '#1976d2';
+                }
+            };
+
+            tableBody.innerHTML = filteredBaselines.map(baseline => {
+                const statusColor = getStatusBadgeColor(baseline.status || 'active');
+                const statusTextColor = getStatusTextColor(baseline.status || 'active');
+
+                return `
+                    <tr>
+                        <td><strong>${baseline.name}</strong></td>
+                        <td style="font-family: monospace; font-size: 12px; color: #666;">${baseline.path || '-'}</td>
+                        <td>
+                            <span style="background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                                ${(baseline.algorithm_type || 'sha256').toUpperCase()}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="background: ${statusColor}; color: ${statusTextColor}; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                                ${(baseline.status || 'active').toUpperCase()}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="background: ${baseline.monitoring_enabled ? '#d4edda' : '#f8d7da'}; color: ${baseline.monitoring_enabled ? '#155724' : '#721c24'}; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                                ${baseline.monitoring_enabled ? '✓ Enabled' : '✗ Disabled'}
+                            </span>
+                        </td>
+                        <td style="font-size: 12px;">${new Date(baseline.created_at).toLocaleString()}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn-action" onclick="viewBaseline(${baseline.id})" title="View">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                <button class="btn-action" onclick="editBaseline(${baseline.id})" title="Edit">
+                                    <i class="fas fa-pencil-alt"></i> Edit
+                                </button>
+                                <button class="btn-action btn-delete" onclick="deleteBaseline(${baseline.id})" title="Delete">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Search Baselines
+        function searchBaselines() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            if (searchTerm.trim() === '') {
+                filteredBaselines = [...allBaselines];
+            } else {
+                filteredBaselines = allBaselines.filter(baseline =>
+                    baseline.name.toLowerCase().includes(searchTerm) ||
+                    (baseline.description && baseline.description.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            displayBaselines();
+        }
+
+        // View Baseline (GetBaselineService - detail endpoint)
+        function viewBaseline(id) {
+            const baseline = allBaselines.find(b => b.id === id);
+            if (baseline) {
+                const detailsModal = createDetailModal(baseline);
+                document.body.appendChild(detailsModal);
+                detailsModal.style.display = 'block';
+            }
+        }
+
+        // Create Detail Modal
+        function createDetailModal(baseline) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+                padding: 20px;
+            `;
+
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white;
+                border-radius: 15px;
+                padding: 30px;
+                max-width: 600px;
+                width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            `;
+
+            const excludePatterns = Array.isArray(baseline.exclude_patterns)
+                ? baseline.exclude_patterns.join(', ')
+                : (baseline.exclude_patterns || 'None');
+
+            const getStatusBadgeColor = (status) => {
+                switch(status) {
+                    case 'active': return '#d4edda';
+                    case 'inactive': return '#f8d7da';
+                    case 'pending': return '#fff3cd';
+                    case 'archived': return '#e2e3e5';
+                    default: return '#e3f2fd';
+                }
+            };
+
+            const getStatusTextColor = (status) => {
+                switch(status) {
+                    case 'active': return '#155724';
+                    case 'inactive': return '#721c24';
+                    case 'pending': return '#856404';
+                    case 'archived': return '#383d41';
+                    default: return '#1976d2';
+                }
+            };
+
+            const statusColor = getStatusBadgeColor(baseline.status || 'active');
+            const statusTextColor = getStatusTextColor(baseline.status || 'active');
+
+            modalContent.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: #333;">${baseline.name}</h3>
+                    <button onclick="closeDetailModal(this)" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
+                </div>
+                <div style="color: #666; line-height: 1.8; font-size: 14px;">
+                    <p><strong>ID:</strong> ${baseline.id}</p>
+                    <p><strong>Description:</strong> ${baseline.description || 'N/A'}</p>
+                    <p><strong>Path:</strong> <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; font-family: monospace; color: #333;">${baseline.path || 'N/A'}</code></p>
+                    <p><strong>Algorithm Type:</strong> <span style="background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-weight: 600;">${(baseline.algorithm_type || 'sha256').toUpperCase()}</span></p>
+                    <p><strong>Exclude Patterns:</strong> ${excludePatterns}</p>
+                    <p><strong>Monitoring:</strong> <span style="background: ${baseline.monitoring_enabled ? '#d4edda' : '#f8d7da'}; color: ${baseline.monitoring_enabled ? '#155724' : '#721c24'}; padding: 4px 8px; border-radius: 4px; font-weight: 600;">${baseline.monitoring_enabled ? '✓ Enabled' : '✗ Disabled'}</span></p>
+                    <p><strong>Status:</strong> <span style="background: ${statusColor}; color: ${statusTextColor}; padding: 4px 8px; border-radius: 4px; font-weight: 600;">${(baseline.status || 'active').toUpperCase()}</span></p>
+                    <p><strong>Created At:</strong> ${new Date(baseline.created_at).toLocaleString()}</p>
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button onclick="closeDetailModal(this); editBaseline(${baseline.id})" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Edit</button>
+                    <button onclick="closeDetailModal(this)" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Close</button>
+                </div>
+            `;
+
+            modal.appendChild(modalContent);
+            return modal;
+        }
+
+        // Close Detail Modal
+        function closeDetailModal(btn) {
+            const modal = btn.closest('.modal-overlay');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Edit Baseline (UpdateBaselineService)
+        function editBaseline(id) {
+            const baseline = allBaselines.find(b => b.id === id);
+            if (baseline) {
+                const editModal = createEditModal(baseline);
+                document.body.appendChild(editModal);
+                editModal.style.display = 'block';
+            }
+        }
+
+        // Create Edit Modal
+        function createEditModal(baseline) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+                padding: 20px;
+            `;
+
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white;
+                border-radius: 15px;
+                padding: 30px;
+                max-width: 600px;
+                width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            `;
+
+            const excludePatterns = Array.isArray(baseline.exclude_patterns)
+                ? baseline.exclude_patterns.join(', ')
+                : (baseline.exclude_patterns || '');
+
+            modalContent.innerHTML = `
+                <h3 style="margin: 0 0 20px 0; color: #333;">Edit Baseline: ${baseline.name}</h3>
+                <form onsubmit="submitEditBaseline(event, ${baseline.id}, this)">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Baseline ID (Read-only)</label>
+                        <input type="text" value="${baseline.id}" disabled style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: #f5f5f5; color: #999;">
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Name *</label>
+                        <input type="text" value="${baseline.name}" name="name" required style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Description</label>
+                        <textarea name="description" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; min-height: 80px;">${baseline.description || ''}</textarea>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Path to Monitor *</label>
+                        <input type="text" value="${baseline.path || ''}" name="path" required style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Algorithm Type</label>
+                        <select name="algorithm_type" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: white;">
+                            <option value="sha256" ${(baseline.algorithm_type || 'sha256') === 'sha256' ? 'selected' : ''}>SHA256</option>
+                            <option value="md5" ${baseline.algorithm_type === 'md5' ? 'selected' : ''}>MD5</option>
+                            <option value="sha1" ${baseline.algorithm_type === 'sha1' ? 'selected' : ''}>SHA1</option>
+                            <option value="sha512" ${baseline.algorithm_type === 'sha512' ? 'selected' : ''}>SHA512</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Exclude Patterns</label>
+                        <input type="text" name="exclude_patterns" value="${excludePatterns}" placeholder="e.g., *.log, *.tmp (comma separated)" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                        <p style="font-size: 12px; color: #999; margin: 5px 0 0 0;">Separate patterns with commas</p>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">
+                            <input type="checkbox" name="monitoring_enabled" ${baseline.monitoring_enabled ? 'checked' : ''} style="margin-right: 8px;">
+                            Enable Monitoring
+                        </label>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Status</label>
+                        <select name="status" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: white;">
+                            <option value="active" ${(baseline.status || 'active') === 'active' ? 'selected' : ''}>Active</option>
+                            <option value="inactive" ${baseline.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                            <option value="pending" ${baseline.status === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="archived" ${baseline.status === 'archived' ? 'selected' : ''}>Archived</option>
+                        </select>
+                    </div>
+
+                    <input type="hidden" name="baseline_id" value="${baseline.id}">
+                    <input type="hidden" name="user_id" value="${baseline.user_id || localStorage.getItem('user_id')}">
+
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Save Changes</button>
+                        <button type="button" onclick="closeModal(this)" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Cancel</button>
+                    </div>
+                </form>
+            `;
+
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
+
+        // Submit Edit (UpdateBaselineService)
+        function submitEditBaseline(event, id, form) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+
+            // Parse exclude_patterns from comma-separated string to array
+            const excludePatternsStr = formData.get('exclude_patterns') || '';
+            const excludePatterns = excludePatternsStr
+                .split(',')
+                .map(p => p.trim())
+                .filter(p => p.length > 0);
+
+            const updateData = {
+                baseline_id: formData.get('baseline_id') || id,
+                name: formData.get('name'),
+                description: formData.get('description') || '',
+                path: formData.get('path'),
+                algorithm_type: formData.get('algorithm_type') || 'sha256',
+                exclude_patterns: excludePatterns.length > 0 ? excludePatterns : [],
+                monitoring_enabled: formData.has('monitoring_enabled'),
+                status: formData.get('status') || 'active',
+                user_id: formData.get('user_id') || localStorage.getItem('user_id')
+            };
+
+            const apiToken = localStorage.getItem('api_token');
+            const modal = form.closest('.modal-overlay');
+
+            // Call UpdateBaselineService (without trailing slash)
+            fetch(API_ENDPOINT + id, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + apiToken
+                },
+                body: JSON.stringify(updateData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update baseline');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Close modal
+                if (modal) {
+                    modal.remove();
+                }
+                // Refresh the page to show baselines
+                loadBaselines();
+                alert('Baseline updated successfully');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Error updating baseline: ' + error.message);
+            });
+        }
+
+        // Delete Baseline (DeleteBaselineService)
+        function deleteBaseline(id) {
+            const baseline = allBaselines.find(b => b.id === id);
+            if (baseline && confirm(`Are you sure you want to delete "${baseline.name}"?`)) {
+                const apiToken = localStorage.getItem('api_token');
+                const userId = localStorage.getItem('user_id');
+
+                const deleteData = {
+                    baseline_id: id,
+                    user_id: userId
+                };
+
+                // Call DeleteBaselineService
+                fetch(API_ENDPOINT, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    },
+                    body: JSON.stringify(deleteData)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        loadBaselines();
+                        alert('Baseline deleted successfully');
+                    } else {
+                        throw new Error('Failed to delete baseline');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showError('Error deleting baseline: ' + error.message);
+                });
+            }
+        }
+
+        // Create New Baseline Modal (CreateBaselineService)
+        function openCreateBaselineModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+                padding: 20px;
+            `;
+
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white;
+                border-radius: 15px;
+                padding: 30px;
+                max-width: 600px;
+                width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            `;
+
+            const userId = localStorage.getItem('user_id') || '';
+
+            modalContent.innerHTML = `
+                <h3 style="margin: 0 0 20px 0; color: #333;">Create New Baseline</h3>
+                <form onsubmit="submitCreateBaseline(event, this)">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Baseline Name *</label>
+                        <input type="text" name="name" placeholder="Enter baseline name" required style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Description</label>
+                        <textarea name="description" placeholder="Enter baseline description" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; min-height: 80px;"></textarea>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Path to Monitor *</label>
+                        <input type="text" name="path" placeholder="/path/to/monitor" required style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Algorithm Type</label>
+                        <select name="algorithm_type" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: white;">
+                            <option value="sha256" selected>SHA256</option>
+                            <option value="md5">MD5</option>
+                            <option value="sha1">SHA1</option>
+                            <option value="sha512">SHA512</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Exclude Patterns</label>
+                        <input type="text" name="exclude_patterns" placeholder="e.g., *.log, *.tmp (comma separated)" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                        <p style="font-size: 12px; color: #999; margin: 5px 0 0 0;">Separate patterns with commas</p>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">
+                            <input type="checkbox" name="monitoring_enabled" checked style="margin-right: 8px;">
+                            Enable Monitoring
+                        </label>
+                    </div>
+
+                    <input type="hidden" name="user_id" value="${userId}">
+
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Create Baseline</button>
+                        <button type="button" onclick="closeModal(this)" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Cancel</button>
+                    </div>
+                </form>
+            `;
+
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
+
+        // Close Modal Helper
+        function closeModal(btn) {
+            const modal = btn.closest('.modal-overlay');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Submit Create Baseline (CreateBaselineService)
+        function submitCreateBaseline(event, form) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+
+            // Parse exclude_patterns from comma-separated string to array
+            const excludePatternsStr = formData.get('exclude_patterns') || '';
+            const excludePatterns = excludePatternsStr
+                .split(',')
+                .map(p => p.trim())
+                .filter(p => p.length > 0);
+
+            const createData = {
+                name: formData.get('name'),
+                description: formData.get('description') || '',
+                path: formData.get('path'),
+                algorithm_type: formData.get('algorithm_type') || 'sha256',
+                exclude_patterns: excludePatterns.length > 0 ? excludePatterns : [],
+                monitoring_enabled: formData.has('monitoring_enabled'),
+                user_id: formData.get('user_id') || localStorage.getItem('user_id')
+            };
+
+            const apiToken = localStorage.getItem('api_token');
+            const modal = form.closest('.modal-overlay');
+
+            // Call CreateBaselineService (without trailing slash)
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + apiToken
+                },
+                body: JSON.stringify(createData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to create baseline');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Close modal
+                if (modal) {
+                    modal.remove();
+                }
+                // Refresh the page to show baselines
+                loadBaselines();
+                alert('Baseline created successfully');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Error creating baseline: ' + error.message);
+            });
+        }
+
+        // Show Error
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.clear();
+                window.location.href = '/accounts/login';
+            }
+        }
+    </script>
+</body>
+</html>

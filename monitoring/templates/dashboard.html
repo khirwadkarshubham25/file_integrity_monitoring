@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - File Integrity Monitoring</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #27ae60;
+            --danger-color: #ef4444;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            padding: 15px 30px;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 22px;
+            color: white !important;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            border-bottom: 2px solid white;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .btn-logout {
+            background: var(--danger-color);
+            border: 1px solid #dc2626;
+        }
+
+        .btn-logout:hover {
+            background: #dc2626;
+            border-color: #b91c1c;
+        }
+
+        .container-fluid {
+            padding: 40px 30px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title h1 {
+            font-weight: 700;
+            font-size: 32px;
+            color: #333;
+            margin: 0 0 8px 0;
+        }
+
+        .page-title p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .health-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .health-status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .health-icon {
+            font-size: 48px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .health-icon.healthy {
+            background: var(--success-color);
+        }
+
+        .health-icon.warning {
+            background: var(--warning-color);
+        }
+
+        .health-icon.critical {
+            background: var(--danger-color);
+        }
+
+        .health-content h3 {
+            margin: 0 0 5px 0;
+            color: #333;
+            font-weight: 700;
+        }
+
+        .health-content p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+
+        .stat-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card-icon {
+            font-size: 24px;
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .stat-card-icon.primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .stat-card-icon.success {
+            background: var(--success-color);
+        }
+
+        .stat-card-icon.danger {
+            background: var(--danger-color);
+        }
+
+        .stat-card-icon.warning {
+            background: var(--warning-color);
+        }
+
+        .stat-card-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .stat-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            color: #333;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .stat-value.success {
+            color: var(--success-color);
+        }
+
+        .stat-value.danger {
+            color: var(--danger-color);
+        }
+
+        .stat-value.warning {
+            color: var(--warning-color);
+        }
+
+        .recent-activity-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .card-header-custom {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .card-header-custom i {
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+
+        .card-header-custom h3 {
+            margin: 0;
+            color: #333;
+            font-weight: 700;
+        }
+
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .activity-description {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .activity-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .badge-critical {
+            background: #ffe0e0;
+            color: var(--danger-color);
+        }
+
+        .badge-high {
+            background: #fff3cd;
+            color: var(--warning-color);
+        }
+
+        .badge-medium {
+            background: #e3f2fd;
+            color: var(--info-color);
+        }
+
+        .badge-low {
+            background: #e8f5e9;
+            color: var(--success-color);
+        }
+
+        .badge-completed {
+            background: #d4edda;
+            color: var(--success-color);
+        }
+
+        .badge-failed {
+            background: #f8d7da;
+            color: var(--danger-color);
+        }
+
+        .activity-time {
+            color: #999;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .refresh-info {
+            text-align: right;
+            font-size: 12px;
+            color: #999;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .activity-item {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .activity-time {
+                align-self: flex-start;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .navbar-custom {
+                padding: 12px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar-custom">
+        <div class="container-fluid" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 30px;">
+                <a class="navbar-brand" href="/monitoring/dashboard" style="margin: 0;"><i class="fas fa-shield-alt"></i> FIM System</a>
+                <div class="nav-links">
+                    <a href="/monitoring/dashboard" class="nav-link active">
+                        <i class="fas fa-chart-line"></i> Dashboard
+                    </a>
+                    <a href="/monitoring/baselines" class="nav-link">
+                        <i class="fas fa-folder"></i> Baselines
+                    </a>
+                    <a href="/monitoring/alerts" class="nav-link">
+                        <i class="fas fa-bell"></i> Alerts
+                    </a>
+                    <a href="/monitoring/file-changes" class="nav-link">
+                        <i class="fas fa-file-alt"></i> File Changes
+                    </a>
+                    <a href="/monitoring/monitoring-sessions" class="nav-link">
+                        <i class="fas fa-cogs"></i> Sessions
+                    </a>
+                    <a href="/monitoring/whitelist-rules" class="nav-link">
+                        <i class="fas fa-shield-alt"></i> Rules
+                    </a>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="nav-btn" id="profileBtn">
+                    <i class="fas fa-user-circle"></i> Profile
+                </button>
+                <button class="nav-btn" id="settingsBtn">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+                <button class="nav-btn btn-logout" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-title">
+                <h1><i class="fas fa-chart-line"></i> Dashboard</h1>
+                <p>File Integrity Monitoring Overview</p>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <!-- Loading State -->
+        <div class="loading-spinner" id="loadingState">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div id="dashboardContent" style="display: none;">
+            <!-- Health Status Card -->
+            <div class="health-card">
+                <div class="health-status-indicator">
+                    <div class="health-icon healthy" id="healthIcon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="health-content">
+                        <h3>System Status: <span id="healthStatus">Loading...</span></h3>
+                        <p>Last updated: <span id="lastUpdated">-</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Grid -->
+            <div class="stats-grid">
+                <!-- Baselines Card -->
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-icon primary">
+                            <i class="fas fa-folder"></i>
+                        </div>
+                        <div class="stat-card-title">Baselines</div>
+                    </div>
+                    <div class="stat-items">
+                        <div class="stat-item">
+                            <span class="stat-label">Total Active</span>
+                            <span class="stat-value" id="totalBaselines">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Monitored</span>
+                            <span class="stat-value success" id="monitoredBaselines">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Coverage</span>
+                            <span class="stat-value" id="coveragePercentage">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sessions Card -->
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-icon primary">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <div class="stat-card-title">Monitoring Sessions</div>
+                    </div>
+                    <div class="stat-items">
+                        <div class="stat-item">
+                            <span class="stat-label">Total</span>
+                            <span class="stat-value" id="totalSessions">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Completed</span>
+                            <span class="stat-value success" id="completedSessions">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Failed</span>
+                            <span class="stat-value danger" id="failedSessions">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Changes Card -->
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-icon warning">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="stat-card-title">File Changes</div>
+                    </div>
+                    <div class="stat-items">
+                        <div class="stat-item">
+                            <span class="stat-label">Total</span>
+                            <span class="stat-value" id="totalChanges">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Unacknowledged</span>
+                            <span class="stat-value danger" id="unacknowledgedChanges">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Last 24h</span>
+                            <span class="stat-value" id="changes24h">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerts Card -->
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-icon danger">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="stat-card-title">Alerts</div>
+                    </div>
+                    <div class="stat-items">
+                        <div class="stat-item">
+                            <span class="stat-label">Total</span>
+                            <span class="stat-value" id="totalAlerts">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Unread</span>
+                            <span class="stat-value danger" id="unreadAlerts">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Critical</span>
+                            <span class="stat-value danger" id="criticalAlerts">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rules Card -->
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-icon success">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="stat-card-title">Whitelist Rules</div>
+                    </div>
+                    <div class="stat-items">
+                        <div class="stat-item">
+                            <span class="stat-label">Total</span>
+                            <span class="stat-value" id="totalRules">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Active</span>
+                            <span class="stat-value success" id="activeRules">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Inactive</span>
+                            <span class="stat-value" id="inactiveRules">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="recent-activity-card">
+                <div class="card-header-custom">
+                    <i class="fas fa-history"></i>
+                    <h3>Recent Activity</h3>
+                </div>
+                <div id="recentActivityContent">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>No recent activity</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Refresh Info -->
+            <div class="refresh-info">
+                Auto-refreshing every 30 seconds. Last refresh: <span id="refreshTime">-</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuration
+        const REFRESH_INTERVAL = 30000; // 30 seconds
+        const API_ENDPOINT = '/monitoring/api/dashboard-summary';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+            setInterval(loadDashboardData, REFRESH_INTERVAL);
+            setupNavigation();
+        });
+
+        // Setup Navigation
+        function setupNavigation() {
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('profileBtn').addEventListener('click', function() {
+                alert('Profile functionality - Coming soon');
+            });
+            document.getElementById('settingsBtn').addEventListener('click', function() {
+                alert('Settings functionality - Coming soon');
+            });
+        }
+
+        // Load Dashboard Data
+        function loadDashboardData() {
+            const loadingState = document.getElementById('loadingState');
+            const dashboardContent = document.getElementById('dashboardContent');
+            const errorMessage = document.getElementById('errorMessage');
+
+            loadingState.style.display = 'block';
+            dashboardContent.style.display = 'none';
+            errorMessage.style.display = 'none';
+
+            const apiToken = localStorage.getItem('api_token');
+
+            fetch(API_ENDPOINT, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + apiToken
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load dashboard data');
+                }
+                return response.json();
+            })
+            .then(data => {
+                updateDashboard(data);
+                loadingState.style.display = 'none';
+                dashboardContent.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Failed to load dashboard data: ' + error.message);
+                loadingState.style.display = 'none';
+            });
+        }
+
+        // Update Dashboard
+        function updateDashboard(data) {
+            // Update health status
+            const healthStatus = data.health_status;
+            const healthIcon = document.getElementById('healthIcon');
+            healthIcon.className = 'health-icon ' + healthStatus;
+            healthIcon.innerHTML = getHealthIcon(healthStatus);
+            document.getElementById('healthStatus').textContent = healthStatus.toUpperCase();
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+
+            // Update baseline stats
+            document.getElementById('totalBaselines').textContent = data.baselines.total;
+            document.getElementById('monitoredBaselines').textContent = data.baselines.monitored;
+            document.getElementById('coveragePercentage').textContent = data.baselines.coverage_percentage.toFixed(1) + '%';
+
+            // Update session stats
+            document.getElementById('totalSessions').textContent = data.monitoring_sessions.total;
+            document.getElementById('completedSessions').textContent = data.monitoring_sessions.completed;
+            document.getElementById('failedSessions').textContent = data.monitoring_sessions.failed;
+
+            // Update file change stats
+            document.getElementById('totalChanges').textContent = data.file_changes.total;
+            document.getElementById('unacknowledgedChanges').textContent = data.file_changes.unacknowledged;
+            document.getElementById('changes24h').textContent = data.file_changes.last_24h;
+
+            // Update alert stats
+            document.getElementById('totalAlerts').textContent = data.alerts.total;
+            document.getElementById('unreadAlerts').textContent = data.alerts.unread;
+            document.getElementById('criticalAlerts').textContent = data.alerts.critical;
+
+            // Update rule stats
+            document.getElementById('totalRules').textContent = data.whitelist_rules.total;
+            document.getElementById('activeRules').textContent = data.whitelist_rules.active;
+            document.getElementById('inactiveRules').textContent = data.whitelist_rules.inactive;
+
+            // Update recent activity
+            updateRecentActivity(data.recent_activity);
+
+            // Update refresh time
+            document.getElementById('refreshTime').textContent = new Date().toLocaleTimeString();
+        }
+
+        // Update Recent Activity
+        function updateRecentActivity(activity) {
+            const container = document.getElementById('recentActivityContent');
+            container.innerHTML = '';
+
+            if (!activity || !activity.recent_sessions || activity.recent_sessions.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No recent activity</p></div>';
+                return;
+            }
+
+            // Recent sessions
+            activity.recent_sessions.forEach(session => {
+                const statusBadge = session.status === 'completed' ? 'badge-completed' : 'badge-failed';
+                const item = document.createElement('div');
+                item.className = 'activity-item';
+                item.innerHTML = `
+                    <div class="activity-content">
+                        <div class="activity-title">${session.baseline_name}</div>
+                        <div class="activity-description">
+                            <span class="activity-badge ${statusBadge}">${session.status.toUpperCase()}</span>
+                            Scanned: ${session.files_scanned} | Changed: ${session.files_changed}
+                        </div>
+                    </div>
+                    <div class="activity-time">${new Date(session.created_at).toLocaleString()}</div>
+                `;
+                container.appendChild(item);
+            });
+
+            // Recent alerts
+            if (activity.recent_alerts && activity.recent_alerts.length > 0) {
+                const divider = document.createElement('hr');
+                container.appendChild(divider);
+
+                activity.recent_alerts.forEach(alert => {
+                    const severityClass = 'badge-' + alert.severity;
+                    const readBadge = alert.read ? 'badge-completed' : 'badge-high';
+                    const item = document.createElement('div');
+                    item.className = 'activity-item';
+                    item.innerHTML = `
+                        <div class="activity-content">
+                            <div class="activity-title">${alert.title}</div>
+                            <div class="activity-description">
+                                <span class="activity-badge ${severityClass}">${alert.severity.toUpperCase()}</span>
+                                <span class="activity-badge ${readBadge}">${alert.read ? 'READ' : 'UNREAD'}</span>
+                            </div>
+                        </div>
+                        <div class="activity-time">${new Date(alert.created_at).toLocaleString()}</div>
+                    `;
+                    container.appendChild(item);
+                });
+            }
+        }
+
+        // Get Health Icon
+        function getHealthIcon(status) {
+            const icons = {
+                'healthy': '<i class="fas fa-check"></i>',
+                'warning': '<i class="fas fa-exclamation-triangle"></i>',
+                'critical': '<i class="fas fa-times"></i>'
+            };
+            return icons[status] || '<i class="fas fa-question"></i>';
+        }
+
+        // Show Error
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.clear();
+                window.location.href = '/accounts/login';
+            }
+        }
+    </script>
+</body>
+</html>

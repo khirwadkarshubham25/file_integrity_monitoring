@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whitelist Rules - File Integrity Monitoring</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #27ae60;
+            --danger-color: #ef4444;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            padding: 15px 30px;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 22px;
+            color: white !important;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            border-bottom: 2px solid white;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .btn-logout {
+            background: var(--danger-color);
+            border: 1px solid #dc2626;
+        }
+
+        .btn-logout:hover {
+            background: #dc2626;
+            border-color: #b91c1c;
+        }
+
+        .container-fluid {
+            padding: 40px 30px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title h1 {
+            font-weight: 700;
+            font-size: 32px;
+            color: #333;
+            margin: 0 0 8px 0;
+        }
+
+        .page-title p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .search-filter-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .search-box input,
+        .search-box select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus,
+        .search-box select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.15);
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        table {
+            width: 100%;
+            margin: 0;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        th {
+            padding: 20px;
+            text-align: left;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        td {
+            padding: 18px 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        tbody tr.inactive-rule {
+            opacity: 0.7;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .status-expired {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-expiring-soon {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-action:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--secondary-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(0,0,0,0.5) !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            z-index: 1000 !important;
+            padding: 20px !important;
+            overflow: auto !important;
+        }
+
+        .modal-overlay > div {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease-out;
+            margin: auto;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-overlay input:focus,
+        .modal-overlay textarea:focus,
+        .modal-overlay select:focus {
+            border-color: #667eea !important;
+            box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.15) !important;
+            outline: none !important;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.15);
+            outline: none;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            font-weight: 400;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .search-filter-section {
+                flex-direction: column;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .navbar-custom {
+                padding: 12px 20px;
+            }
+
+            th, td {
+                padding: 12px;
+                font-size: 12px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar-custom">
+        <div class="container-fluid" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 30px;">
+                <a class="navbar-brand" href="/monitoring/dashboard" style="margin: 0;"><i class="fas fa-shield-alt"></i> FIM System</a>
+                <div class="nav-links">
+                    <a href="/monitoring/dashboard" class="nav-link">
+                        <i class="fas fa-chart-line"></i> Dashboard
+                    </a>
+                    <a href="/monitoring/baselines" class="nav-link">
+                        <i class="fas fa-folder"></i> Baselines
+                    </a>
+                    <a href="/monitoring/alerts" class="nav-link">
+                        <i class="fas fa-bell"></i> Alerts
+                    </a>
+                    <a href="/monitoring/file-changes" class="nav-link">
+                        <i class="fas fa-file-alt"></i> File Changes
+                    </a>
+                    <a href="/monitoring/monitoring-sessions" class="nav-link">
+                        <i class="fas fa-cogs"></i> Sessions
+                    </a>
+                    <a href="/monitoring/whitelist-rules" class="nav-link active">
+                        <i class="fas fa-shield-alt"></i> Rules
+                    </a>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="nav-btn" id="profileBtn">
+                    <i class="fas fa-user-circle"></i> Profile
+                </button>
+                <button class="nav-btn" id="settingsBtn">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+                <button class="nav-btn btn-logout" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-title">
+                <h1><i class="fas fa-shield-alt"></i> Whitelist Rules</h1>
+                <p>Manage Approved File Change Patterns</p>
+            </div>
+            <button class="btn-primary" id="refreshBtn">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <!-- Search & Filter Section -->
+        <div class="search-filter-section">
+            <div class="search-box">
+                <label for="searchInput">Search Rules</label>
+                <input type="text" id="searchInput" placeholder="Search by pattern or baseline..." onkeyup="searchRules()">
+            </div>
+
+            <div class="search-box">
+                <label for="baselineFilter">Baseline</label>
+                <select id="baselineFilter" onchange="filterRules()">
+                    <option value="">All Baselines</option>
+                </select>
+            </div>
+
+            <div class="search-box">
+                <label for="statusFilter">Status</label>
+                <select id="statusFilter" onchange="filterRules()">
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="expired">Expired</option>
+                    <option value="expiring_soon">Expiring Soon</option>
+                </select>
+            </div>
+
+            <button class="btn-success" id="addRuleBtn">
+                <i class="fas fa-plus-circle"></i> Add Rule
+            </button>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-spinner" id="loadingState">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Table Content -->
+        <div id="rulesContent" style="display: none;">
+            <div class="table-container">
+                <table id="rulesTable">
+                    <thead>
+                        <tr>
+                            <th>File Pattern</th>
+                            <th>Baseline</th>
+                            <th>Change Types</th>
+                            <th>Status</th>
+                            <th>Expires</th>
+                            <th>Reason</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                                No whitelist rules found
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuration
+        const API_ENDPOINT = '/monitoring/api/whitelist-rules';
+        const API_DETAILS_ENDPOINT = '/monitoring/api/whitelist-rule-details';
+        const API_CREATE_ENDPOINT = '/monitoring/api/whitelist-rules';
+        const API_UPDATE_ENDPOINT = '/monitoring/api/whitelist-rules';
+        const API_DELETE_ENDPOINT = '/monitoring/api/whitelist-rules';
+        const API_BASELINES_ENDPOINT = '/monitoring/api/baselines';
+        let currentPage = 1;
+        let allRules = [];
+        let filteredRules = [];
+        let allBaselines = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            getBaselines();
+            loadWhitelistRules();
+            setupEventListeners();
+        });
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('profileBtn').addEventListener('click', function() {
+                alert('Profile functionality - Coming soon');
+            });
+            document.getElementById('settingsBtn').addEventListener('click', function() {
+                alert('Settings functionality - Coming soon');
+            });
+            document.getElementById('refreshBtn').addEventListener('click', loadWhitelistRules);
+            document.getElementById('addRuleBtn').addEventListener('click', showAddRuleModal);
+        }
+
+        // Get Baselines
+        function getBaselines() {
+            const apiToken = localStorage.getItem('api_token');
+
+            fetch(API_BASELINES_ENDPOINT, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + apiToken
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load baselines');
+                }
+                return response.json();
+            })
+            .then(data => {
+                allBaselines = data.baselines || [];
+                populateBaselineFilter();
+            })
+            .catch(error => {
+                console.error('Error loading baselines:', error);
+            });
+        }
+
+        // Populate Baseline Filter Dropdown
+        function populateBaselineFilter() {
+            const baselineFilter = document.getElementById('baselineFilter');
+            const currentValue = baselineFilter.value;
+
+            baselineFilter.innerHTML = '<option value="">All Baselines</option>';
+
+            allBaselines.forEach(baseline => {
+                const option = document.createElement('option');
+                option.value = baseline.id;
+                option.textContent = baseline.name;
+                baselineFilter.appendChild(option);
+            });
+
+            baselineFilter.value = currentValue;
+        }
+
+        // Load Whitelist Rules
+        function loadWhitelistRules() {
+            const loadingState = document.getElementById('loadingState');
+            const rulesContent = document.getElementById('rulesContent');
+            const errorMessage = document.getElementById('errorMessage');
+
+            loadingState.style.display = 'flex';
+            rulesContent.style.display = 'none';
+            errorMessage.style.display = 'none';
+
+            const apiToken = localStorage.getItem('api_token');
+
+            fetch(API_ENDPOINT + '?page_size=100', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + apiToken
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load whitelist rules');
+                }
+                return response.json();
+            })
+            .then(data => {
+                allRules = data.rules || [];
+                filteredRules = [...allRules];
+                displayRules();
+                loadingState.style.display = 'none';
+                rulesContent.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Failed to load whitelist rules: ' + error.message);
+                loadingState.style.display = 'none';
+            });
+        }
+
+        // Display Rules in Table
+        function displayRules() {
+            const tableBody = document.getElementById('tableBody');
+
+            if (filteredRules.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                            No whitelist rules found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = filteredRules.map(rule => {
+                const statusBadge = getStatusBadge(rule);
+                const isInactive = !rule.active;
+
+                return `
+                    <tr class="${isInactive ? 'inactive-rule' : ''}">
+                        <td><strong style="font-family: monospace; font-size: 12px;">${rule.file_pattern}</strong></td>
+                        <td>${rule.baseline_name || '-'}</td>
+                        <td>
+                            <span style="font-size: 12px;">
+                                ${rule.change_types.join(', ').toUpperCase()}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge ${statusBadge.class}">
+                                ${statusBadge.text}
+                            </span>
+                        </td>
+                        <td style="font-size: 12px;">
+                            ${rule.expires_at ? new Date(rule.expires_at).toLocaleDateString() : 'Never'}
+                        </td>
+                        <td style="font-size: 12px; max-width: 150px; overflow: hidden; text-overflow: ellipsis;">
+                            ${rule.reason || '-'}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn-action" onclick="viewRuleDetails(${rule.id})" title="View Details">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                <button class="btn-action" onclick="editRule(${rule.id})" title="Edit">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn-action" onclick="deleteRule(${rule.id})" title="Delete" style="color: #ef4444;">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Get Status Badge
+        function getStatusBadge(rule) {
+            if (rule.is_expired) {
+                return { class: 'status-expired', text: 'EXPIRED' };
+            } else if (rule.active && rule.days_until_expiry && rule.days_until_expiry <= 7 && rule.days_until_expiry > 0) {
+                return { class: 'status-expiring-soon', text: 'EXPIRING SOON' };
+            } else if (rule.active) {
+                return { class: 'status-active', text: 'ACTIVE' };
+            } else {
+                return { class: 'status-inactive', text: 'INACTIVE' };
+            }
+        }
+
+        // Search Rules
+        function searchRules() {
+            applyFilters();
+        }
+
+        // Filter Rules
+        function filterRules() {
+            applyFilters();
+        }
+
+        // Apply All Filters
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const baselineId = document.getElementById('baselineFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            filteredRules = allRules.filter(rule => {
+                // Search filter
+                const matchesSearch = !searchTerm ||
+                    rule.file_pattern.toLowerCase().includes(searchTerm) ||
+                    (rule.baseline_name && rule.baseline_name.toLowerCase().includes(searchTerm)) ||
+                    (rule.reason && rule.reason.toLowerCase().includes(searchTerm));
+
+                // Baseline filter
+                const matchesBaseline = !baselineId || (rule.baseline_id && rule.baseline_id.toString() === baselineId);
+
+                // Status filter
+                let matchesStatus = true;
+                if (statusFilter === 'active') {
+                    matchesStatus = rule.active && !rule.is_expired;
+                } else if (statusFilter === 'inactive') {
+                    matchesStatus = !rule.active;
+                } else if (statusFilter === 'expired') {
+                    matchesStatus = rule.is_expired;
+                } else if (statusFilter === 'expiring_soon') {
+                    matchesStatus = rule.active && rule.days_until_expiry && rule.days_until_expiry <= 7 && rule.days_until_expiry > 0;
+                }
+
+                return matchesSearch && matchesBaseline && matchesStatus;
+            });
+
+            displayRules();
+        }
+
+        // View Rule Details
+        function viewRuleDetails(ruleId) {
+            const apiToken = localStorage.getItem('api_token');
+
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                    <p style="color: #666; margin-top: 15px;">Loading rule details...</p>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            fetch(API_DETAILS_ENDPOINT + '?rule_id=' + ruleId, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + apiToken
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load rule details');
+                }
+                return response.json();
+            })
+            .then(data => {
+                modal.remove();
+                showRuleDetailsModal(data.whitelist_rule);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                modal.remove();
+                showError('Error loading rule details: ' + error.message);
+            });
+        }
+
+        // Show Rule Details Modal
+        function showRuleDetailsModal(rule) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white;
+                border-radius: 15px;
+                padding: 30px;
+                max-width: 700px;
+                width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            `;
+
+            const statusBadge = getStatusBadge(rule);
+
+            modalContent.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: #333;">Rule Details</h3>
+                    <button onclick="closeRuleModal(this)" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
+                </div>
+                <div style="color: #666; line-height: 1.8; font-size: 14px;">
+                    <p><strong>File Pattern:</strong> <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; font-family: monospace;">${rule.file_pattern}</code></p>
+                    <p><strong>Baseline:</strong> ${rule.baseline_name || 'N/A'}</p>
+                    <p><strong>Change Types:</strong> ${rule.change_types.join(', ').toUpperCase()}</p>
+                    <p><strong>Status:</strong> <span class="status-badge ${statusBadge.class}">${statusBadge.text}</span></p>
+                    <p><strong>Active:</strong> ${rule.active ? 'Yes' : 'No'}</p>
+                    <p><strong>Reason:</strong> ${rule.reason || 'N/A'}</p>
+                    ${rule.description ? `<p><strong>Description:</strong> ${rule.description}</p>` : ''}
+                    <p><strong>Created At:</strong> ${new Date(rule.created_at).toLocaleString()}</p>
+                    ${rule.updated_at ? `<p><strong>Updated At:</strong> ${new Date(rule.updated_at).toLocaleString()}</p>` : ''}
+                    ${rule.expires_at ? `<p><strong>Expires At:</strong> ${new Date(rule.expires_at).toLocaleString()} (${rule.days_until_expiry} days remaining)</p>` : ''}
+                    ${rule.priority ? `<p><strong>Priority:</strong> ${rule.priority}</p>` : ''}
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button onclick="closeRuleModal(this); editRule(${rule.id})" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Edit Rule</button>
+                    <button onclick="closeRuleModal(this)" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Close</button>
+                </div>
+            `;
+
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
+
+        // Close Rule Modal
+        function closeRuleModal(btn) {
+            const modal = btn.closest('.modal-overlay');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Show Add Rule Modal
+        function showAddRuleModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white;
+                border-radius: 15px;
+                padding: 30px;
+                max-width: 700px;
+                width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            `;
+
+            const baselineOptions = allBaselines.map(baseline => `
+                <option value="${baseline.id}">${baseline.name}</option>
+            `).join('');
+
+            modalContent.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: #333;">Add Whitelist Rule</h3>
+                    <button onclick="closeRuleModal(this)" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
+                </div>
+                <form onsubmit="submitAddRule(event, this)">
+                    <div class="form-group">
+                        <label>Baseline *</label>
+                        <select name="baseline_id" required>
+                            <option value="">Select Baseline</option>
+                            ${baselineOptions}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>File Pattern *</label>
+                        <input type="text" name="file_pattern" placeholder="/etc/config/*.conf" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Change Types *</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="change_types" value="added" id="type_added">
+                                <label for="type_added">Added</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="change_types" value="modified" id="type_modified">
+                                <label for="type_modified">Modified</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="change_types" value="deleted" id="type_deleted">
+                                <label for="type_deleted">Deleted</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="change_types" value="permission" id="type_permission">
+                                <label for="type_permission">Permission</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Reason *</label>
+                        <textarea name="reason" placeholder="Why is this rule needed?" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" placeholder="Additional description (optional)"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Expires At</label>
+                        <input type="datetime-local" name="expires_at">
+                    </div>
+
+                    <div class="form-group">
+                        <label style="margin-bottom: 12px; display: block;">
+                            <input type="checkbox" name="active" checked style="width: auto; margin-right: 8px;">
+                            Active
+                        </label>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" style="flex: 1; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Create Rule</button>
+                        <button type="button" onclick="closeRuleModal(this)" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Cancel</button>
+                    </div>
+                </form>
+            `;
+
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
+
+        // Submit Add Rule
+        function submitAddRule(event, form) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            const changeTypesCheckboxes = form.querySelectorAll('input[name="change_types"]:checked');
+            const changeTypes = Array.from(changeTypesCheckboxes).map(cb => cb.value);
+
+            if (changeTypes.length === 0) {
+                alert('Please select at least one change type');
+                return;
+            }
+
+            const createData = {
+                baseline_id: formData.get('baseline_id'),
+                file_pattern: formData.get('file_pattern'),
+                change_types: changeTypes,
+                reason: formData.get('reason'),
+                description: formData.get('description') || '',
+                active: formData.has('active'),
+                expires_at: formData.get('expires_at') || null,
+                user_id: localStorage.getItem('user_id')
+            };
+
+            const apiToken = localStorage.getItem('api_token');
+            const modal = form.closest('.modal-overlay');
+
+            fetch(API_CREATE_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + apiToken
+                },
+                body: JSON.stringify(createData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to create rule');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (modal) {
+                    modal.remove();
+                }
+                loadWhitelistRules();
+                alert('Whitelist rule created successfully');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Error creating whitelist rule: ' + error.message);
+            });
+        }
+
+        // Edit Rule
+        function editRule(ruleId) {
+            const rule = allRules.find(r => r.id === ruleId);
+            if (!rule) return;
+
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white;
+                border-radius: 15px;
+                padding: 30px;
+                max-width: 700px;
+                width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            `;
+
+            const baselineOptions = allBaselines.map(baseline => `
+                <option value="${baseline.id}" ${baseline.id === rule.baseline_id ? 'selected' : ''}>${baseline.name}</option>
+            `).join('');
+
+            const changeTypeCheckboxes = ['added', 'modified', 'deleted', 'permission'].map(type => `
+                <div class="checkbox-item">
+                    <input type="checkbox" name="change_types" value="${type}" id="type_${type}" ${rule.change_types.includes(type) ? 'checked' : ''}>
+                    <label for="type_${type}">${type.charAt(0).toUpperCase() + type.slice(1)}</label>
+                </div>
+            `).join('');
+
+            modalContent.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: #333;">Edit Whitelist Rule</h3>
+                    <button onclick="closeRuleModal(this)" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
+                </div>
+                <form onsubmit="submitEditRule(event, this, ${ruleId})">
+                    <div class="form-group">
+                        <label>Rule ID (Read-only)</label>
+                        <input type="text" value="${rule.id}" readonly style="background: #f5f5f5; color: #999;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Baseline *</label>
+                        <select name="baseline_id" required>
+                            <option value="">Select Baseline</option>
+                            ${baselineOptions}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>File Pattern *</label>
+                        <input type="text" name="file_pattern" value="${rule.file_pattern}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Change Types *</label>
+                        <div class="checkbox-group">
+                            ${changeTypeCheckboxes}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Reason *</label>
+                        <textarea name="reason" required>${rule.reason}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description">${rule.description || ''}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Expires At</label>
+                        <input type="datetime-local" name="expires_at" value="${rule.expires_at ? new Date(rule.expires_at).toISOString().slice(0, 16) : ''}">
+                    </div>
+
+                    <div class="form-group">
+                        <label style="margin-bottom: 12px; display: block;">
+                            <input type="checkbox" name="active" ${rule.active ? 'checked' : ''} style="width: auto; margin-right: 8px;">
+                            Active
+                        </label>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Update Rule</button>
+                        <button type="button" onclick="closeRuleModal(this)" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Cancel</button>
+                    </div>
+                </form>
+            `;
+
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
+
+        // Submit Edit Rule
+        function submitEditRule(event, form, ruleId) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            const changeTypesCheckboxes = form.querySelectorAll('input[name="change_types"]:checked');
+            const changeTypes = Array.from(changeTypesCheckboxes).map(cb => cb.value);
+
+            if (changeTypes.length === 0) {
+                alert('Please select at least one change type');
+                return;
+            }
+
+            const updateData = {
+                rule_id: ruleId,
+                baseline_id: formData.get('baseline_id'),
+                file_pattern: formData.get('file_pattern'),
+                change_types: changeTypes,
+                reason: formData.get('reason'),
+                description: formData.get('description') || '',
+                active: formData.has('active'),
+                expires_at: formData.get('expires_at') || null,
+                user_id: localStorage.getItem('user_id')
+            };
+
+            const apiToken = localStorage.getItem('api_token');
+            const modal = form.closest('.modal-overlay');
+
+            fetch(API_UPDATE_ENDPOINT + ruleId, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + apiToken
+                },
+                body: JSON.stringify(updateData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update rule');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (modal) {
+                    modal.remove();
+                }
+                loadWhitelistRules();
+                alert('Whitelist rule updated successfully');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Error updating whitelist rule: ' + error.message);
+            });
+        }
+
+        // Delete Rule
+        function deleteRule(ruleId) {
+            const rule = allRules.find(r => r.id === ruleId);
+            if (rule && confirm(`Are you sure you want to delete rule for "${rule.file_pattern}"?`)) {
+                const apiToken = localStorage.getItem('api_token');
+                const userId = localStorage.getItem('user_id');
+
+                const deleteData = {
+                    rule_id: ruleId,
+                    user_id: userId
+                };
+
+                fetch(API_DELETE_ENDPOINT + ruleId, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    },
+                    body: JSON.stringify(deleteData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to delete rule');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    loadWhitelistRules();
+                    alert('Whitelist rule deleted successfully');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showError('Error deleting whitelist rule: ' + error.message);
+                });
+            }
+        }
+
+        // Show Error
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.clear();
+                window.location.href = '/accounts/login';
+            }
+        }
+    </script>
+</body>
+</html>

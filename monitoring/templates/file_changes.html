@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Changes - File Integrity Monitoring</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #27ae60;
+            --danger-color: #ef4444;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            padding: 15px 30px;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 22px;
+            color: white !important;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            border-bottom: 2px solid white;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .btn-logout {
+            background: var(--danger-color);
+            border: 1px solid #dc2626;
+        }
+
+        .btn-logout:hover {
+            background: #dc2626;
+            border-color: #b91c1c;
+        }
+
+        .container-fluid {
+            padding: 40px 30px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title h1 {
+            font-weight: 700;
+            font-size: 32px;
+            color: #333;
+            margin: 0 0 8px 0;
+        }
+
+        .page-title p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .search-filter-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .search-box input,
+        .search-box select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus,
+        .search-box select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.15);
+            outline: none;
+        }
+
+        .btn-refresh {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-refresh:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        table {
+            width: 100%;
+            margin: 0;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        th {
+            padding: 20px;
+            text-align: left;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        td {
+            padding: 18px 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        tbody tr.unacknowledged {
+            background: #fff4f0;
+            font-weight: 500;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .change-type-added {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .change-type-modified {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .change-type-deleted {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .change-type-permission {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-acknowledged {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-unacknowledged {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-action:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--secondary-color);
+        }
+
+        .btn-action.btn-acknowledge {
+            color: var(--success-color);
+        }
+
+        .btn-action.btn-acknowledge:hover {
+            background: rgba(39, 174, 96, 0.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(0,0,0,0.5) !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            z-index: 1000 !important;
+            padding: 20px !important;
+            overflow: auto !important;
+        }
+
+        .modal-overlay > div {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease-out;
+            margin: auto;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-overlay input:focus,
+        .modal-overlay textarea:focus {
+            border-color: #667eea !important;
+            box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.15) !important;
+            outline: none !important;
+        }
+
+        .diff-section {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .diff-added {
+            color: #27ae60;
+            background: #e8f5e9;
+        }
+
+        .diff-removed {
+            color: #c0392b;
+            background: #ffebee;
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .search-filter-section {
+                flex-direction: column;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .navbar-custom {
+                padding: 12px 20px;
+            }
+
+            th, td {
+                padding: 12px;
+                font-size: 12px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar-custom">
+        <div class="container-fluid" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 30px;">
+                <a class="navbar-brand" href="/monitoring/dashboard" style="margin: 0;"><i class="fas fa-shield-alt"></i> FIM System</a>
+                <div class="nav-links">
+                    <a href="/monitoring/dashboard" class="nav-link">
+                        <i class="fas fa-chart-line"></i> Dashboard
+                    </a>
+                    <a href="/monitoring/baselines" class="nav-link">
+                        <i class="fas fa-folder"></i> Baselines
+                    </a>
+                    <a href="/monitoring/alerts" class="nav-link">
+                        <i class="fas fa-bell"></i> Alerts
+                    </a>
+                    <a href="/monitoring/file-changes" class="nav-link active">
+                        <i class="fas fa-file-alt"></i> File Changes
+                    </a>
+                    <a href="/monitoring/monitoring-sessions" class="nav-link">
+                        <i class="fas fa-cogs"></i> Sessions
+                    </a>
+                    <a href="/monitoring/whitelist-rules" class="nav-link">
+                        <i class="fas fa-shield-alt"></i> Rules
+                    </a>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="nav-btn" id="profileBtn">
+                    <i class="fas fa-user-circle"></i> Profile
+                </button>
+                <button class="nav-btn" id="settingsBtn">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+                <button class="nav-btn btn-logout" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-title">
+                <h1><i class="fas fa-file-alt"></i> File Changes</h1>
+                <p>Track File Integrity Changes</p>
+            </div>
+            <button class="btn-refresh" id="refreshBtn">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <!-- Search & Filter Section -->
+        <div class="search-filter-section">
+            <div class="search-box">
+                <label for="searchInput">Search Changes</label>
+                <input type="text" id="searchInput" placeholder="Search by file path or baseline..." onkeyup="searchFileChanges()">
+            </div>
+
+            <div class="search-box">
+                <label for="baselineFilter">Baseline</label>
+                <select id="baselineFilter" onchange="filterFileChanges()">
+                    <option value="">All Baselines</option>
+                    <option value="1">My Config</option>
+                    <option value="2">System Files</option>
+                    <option value="3">Web Root</option>
+                </select>
+            </div>
+
+            <div class="search-box">
+                <label for="severityFilter">Severity</label>
+                <select id="severityFilter" onchange="filterFileChanges()">
+                    <option value="">All Severities</option>
+                    <option value="critical">Critical</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+            </div>
+
+            <div class="search-box">
+                <label for="changeTypeFilter">Change Type</label>
+                <select id="changeTypeFilter" onchange="filterFileChanges()">
+                    <option value="">All Types</option>
+                    <option value="added">Added</option>
+                    <option value="modified">Modified</option>
+                    <option value="deleted">Deleted</option>
+                    <option value="permission">Permission</option>
+                </select>
+            </div>
+
+            <div class="search-box">
+                <label for="statusFilter">Status</label>
+                <select id="statusFilter" onchange="filterFileChanges()">
+                    <option value="">All Statuses</option>
+                    <option value="acknowledged">Acknowledged</option>
+                    <option value="unacknowledged">Unacknowledged</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-spinner" id="loadingState">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Table Content -->
+        <div id="fileChangesContent" style="display: none;">
+            <div class="table-container">
+                <table id="fileChangesTable">
+                    <thead>
+                        <tr>
+                            <th>File Path</th>
+                            <th>Baseline</th>
+                            <th>Change Type</th>
+                            <th>Severity</th>
+                            <th>Status</th>
+                            <th>Timestamp</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                                No file changes found
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuration
+        const API_ENDPOINT = '/monitoring/api/file-changes';
+        let currentPage = 1;
+        let allFileChanges = [];
+        let filteredFileChanges = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFileChanges();
+            setupEventListeners();
+        });
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('profileBtn').addEventListener('click', function() {
+                alert('Profile functionality - Coming soon');
+            });
+            document.getElementById('settingsBtn').addEventListener('click', function() {
+                alert('Settings functionality - Coming soon');
+            });
+            document.getElementById('refreshBtn').addEventListener('click', loadFileChanges);
+        }
+
+        // Load File Changes Data (GET - GetFileChangesService)
+        function loadFileChanges() {
+            const loadingState = document.getElementById('loadingState');
+            const fileChangesContent = document.getElementById('fileChangesContent');
+            const errorMessage = document.getElementById('errorMessage');
+
+            loadingState.style.display = 'flex';
+            fileChangesContent.style.display = 'none';
+            errorMessage.style.display = 'none';
+
+            const apiToken = localStorage.getItem('api_token');
+
+            // Build query parameters for GetFileChangesService
+            const queryParams = new URLSearchParams();
+            queryParams.append('page_size', 100);
+            queryParams.append('page', currentPage);
+            queryParams.append('sort_by', 'created_at');
+            queryParams.append('sort_order', 'desc');
+
+            // Add optional filters if set
+            const baselineId = document.getElementById('baselineFilter')?.value;
+            if (baselineId) {
+                queryParams.append('baseline_id', baselineId);
+            }
+
+            const severity = document.getElementById('severityFilter')?.value;
+            if (severity) {
+                queryParams.append('severity', severity);
+            }
+
+            const changeType = document.getElementById('changeTypeFilter')?.value;
+            if (changeType) {
+                queryParams.append('change_type', changeType);
+            }
+
+            const acknowledged = document.getElementById('statusFilter')?.value;
+            if (acknowledged === 'acknowledged') {
+                queryParams.append('acknowledged', 'true');
+            } else if (acknowledged === 'unacknowledged') {
+                queryParams.append('acknowledged', 'false');
+            }
+
+            // Call GetFileChangesService endpoint (without trailing slash)
+            fetch(API_ENDPOINT + '?' + queryParams.toString(), {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + apiToken
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load file changes');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // GetFileChangesService response structure
+                allFileChanges = data.file_changes || [];
+                filteredFileChanges = [...allFileChanges];
+                displayFileChanges();
+                loadingState.style.display = 'none';
+                fileChangesContent.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Failed to load file changes: ' + error.message);
+                loadingState.style.display = 'none';
+            });
+        }
+
+        // Display File Changes in Table
+        function displayFileChanges() {
+            const tableBody = document.getElementById('tableBody');
+
+            if (filteredFileChanges.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                            No file changes found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const getSeverityBadgeColor = (severity) => {
+                switch(severity) {
+                    case 'critical': return '#ffe5e5';
+                    case 'high': return '#fff4e6';
+                    case 'medium': return '#e3f2fd';
+                    case 'low': return '#f0f4ff';
+                    default: return '#f5f5f5';
+                }
+            };
+
+            const getSeverityTextColor = (severity) => {
+                switch(severity) {
+                    case 'critical': return '#c92a2a';
+                    case 'high': return '#d9480f';
+                    case 'medium': return '#1971c2';
+                    case 'low': return '#5c7cfa';
+                    default: return '#666';
+                }
+            };
+
+            tableBody.innerHTML = filteredFileChanges.map(change => {
+                const isUnacknowledged = !change.acknowledged;
+                const severityBg = getSeverityBadgeColor(change.severity || 'low');
+                const severityText = getSeverityTextColor(change.severity || 'low');
+
+                return `
+                    <tr class="${isUnacknowledged ? 'unacknowledged' : ''}">
+                        <td><strong style="font-family: monospace; font-size: 12px;">${change.file_path}</strong></td>
+                        <td>${change.baseline_name || '-'}</td>
+                        <td>
+                            <span class="status-badge change-type-${change.change_type}">
+                                ${change.change_type.toUpperCase()}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge" style="background: ${severityBg}; color: ${severityText};">
+                                ${(change.severity || 'low').toUpperCase()}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge status-${isUnacknowledged ? 'unacknowledged' : 'acknowledged'}">
+                                ${isUnacknowledged ? 'UNACKNOWLEDGED' : 'ACKNOWLEDGED'}
+                            </span>
+                        </td>
+                        <td style="font-size: 12px;">${new Date(change.created_at).toLocaleString()}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn-action" onclick="viewChangeDetails(${change.id})" title="View Details">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                ${isUnacknowledged ? `
+                                    <button class="btn-action btn-acknowledge" onclick="acknowledgeFileChange(${change.id})" title="Acknowledge">
+                                        <i class="fas fa-check-circle"></i> Ack
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Search File Changes
+        function searchFileChanges() {
+            applyFilters();
+        }
+
+        // Filter File Changes
+        function filterFileChanges() {
+            applyFilters();
+        }
+
+        // Apply All Filters
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const baselineId = document.getElementById('baselineFilter').value;
+            const severity = document.getElementById('severityFilter').value;
+            const changeTypeFilter = document.getElementById('changeTypeFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            filteredFileChanges = allFileChanges.filter(change => {
+                // Search filter
+                const matchesSearch = !searchTerm ||
+                    change.file_path.toLowerCase().includes(searchTerm) ||
+                    (change.baseline_name && change.baseline_name.toLowerCase().includes(searchTerm));
+
+                // Baseline filter
+                const matchesBaseline = !baselineId || (change.baseline_id && change.baseline_id.toString() === baselineId);
+
+                // Severity filter
+                const matchesSeverity = !severity || change.severity === severity;
+
+                // Change type filter
+                const matchesChangeType = !changeTypeFilter || change.change_type === changeTypeFilter;
+
+                // Status filter
+                const matchesStatus = !statusFilter ||
+                    (statusFilter === 'acknowledged' && change.acknowledged) ||
+                    (statusFilter === 'unacknowledged' && !change.acknowledged);
+
+                return matchesSearch && matchesBaseline && matchesSeverity && matchesChangeType && matchesStatus;
+            });
+
+            displayFileChanges();
+        }
+
+        // View File Change Details (GetFileChangeDetailsService)
+        function viewChangeDetails(changeId) {
+            const apiToken = localStorage.getItem('api_token');
+
+            // Show loading state
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                    <p style="color: #666; margin-top: 15px;">Loading change details...</p>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // Call GetFileChangeDetailsService (without trailing slash)
+            fetch(API_ENDPOINT + '/' + changeId, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + apiToken
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load file change details');
+                }
+                return response.json();
+            })
+            .then(data => {
+                modal.remove();
+                showFileChangeDetailsModal(data.file_change);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                modal.remove();
+                showError('Error loading file change details: ' + error.message);
+            });
+        }
+
+        // Show File Change Details Modal
+        function showFileChangeDetailsModal(change) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white;
+                border-radius: 15px;
+                padding: 30px;
+                max-width: 700px;
+                width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            `;
+
+            const isUnacknowledged = !change.acknowledged;
+
+            const getSeverityBadgeColor = (severity) => {
+                switch(severity) {
+                    case 'critical': return '#ffe5e5';
+                    case 'high': return '#fff4e6';
+                    case 'medium': return '#e3f2fd';
+                    case 'low': return '#f0f4ff';
+                    default: return '#f5f5f5';
+                }
+            };
+
+            const getSeverityTextColor = (severity) => {
+                switch(severity) {
+                    case 'critical': return '#c92a2a';
+                    case 'high': return '#d9480f';
+                    case 'medium': return '#1971c2';
+                    case 'low': return '#5c7cfa';
+                    default: return '#666';
+                }
+            };
+
+            const severityBg = getSeverityBadgeColor(change.severity || 'low');
+            const severityText = getSeverityTextColor(change.severity || 'low');
+
+            modalContent.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: #333;">File Change Details</h3>
+                    <button onclick="closeChangeModal(this)" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
+                </div>
+                <div style="color: #666; line-height: 1.8; font-size: 14px;">
+                    <p><strong>File Path:</strong> <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; font-family: monospace;">${change.file_path}</code></p>
+                    <p><strong>Baseline:</strong> ${change.baseline_name || 'N/A'}</p>
+                    <p><strong>Change Type:</strong> <span class="status-badge change-type-${change.change_type}">${change.change_type.toUpperCase()}</span></p>
+                    <p><strong>Severity:</strong> <span class="status-badge" style="background: ${severityBg}; color: ${severityText};">${(change.severity || 'low').toUpperCase()}</span></p>
+                    <p><strong>Status:</strong> <span class="status-badge status-${isUnacknowledged ? 'unacknowledged' : 'acknowledged'}">${isUnacknowledged ? 'UNACKNOWLEDGED' : 'ACKNOWLEDGED'}</span></p>
+                    <p><strong>Description:</strong> ${change.description || 'No description'}</p>
+
+                    ${change.previous_hash ? `
+                        <p><strong>Previous Hash:</strong></p>
+                        <div class="diff-section diff-removed">Previous: ${change.previous_hash}</div>
+                    ` : ''}
+
+                    ${change.current_hash ? `
+                        <p><strong>Current Hash:</strong></p>
+                        <div class="diff-section diff-added">Current: ${change.current_hash}</div>
+                    ` : ''}
+
+                    ${change.details ? `
+                        <p><strong>Details:</strong></p>
+                        <div class="diff-section">${JSON.stringify(change.details, null, 2)}</div>
+                    ` : ''}
+
+                    <p><strong>Created At:</strong> ${new Date(change.created_at).toLocaleString()}</p>
+                    ${change.acknowledged_at ? `<p><strong>Acknowledged At:</strong> ${new Date(change.acknowledged_at).toLocaleString()}</p>` : ''}
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    ${isUnacknowledged ? `
+                        <button onclick="closeChangeModal(this); acknowledgeFileChange(${change.id})" style="flex: 1; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Acknowledge</button>
+                    ` : ''}
+                    <button onclick="closeChangeModal(this)" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Close</button>
+                </div>
+            `;
+
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
+
+        // Close Change Modal
+        function closeChangeModal(btn) {
+            const modal = btn.closest('.modal-overlay');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Acknowledge File Change (CreateFileChangesAcknowledgeService)
+        function acknowledgeFileChange(changeId) {
+            if (!confirm('Are you sure you want to acknowledge this file change?')) {
+                return;
+            }
+
+            const apiToken = localStorage.getItem('api_token');
+            const userId = localStorage.getItem('user_id');
+
+            const acknowledgeData = {
+                file_change_id: changeId,
+                user_id: userId,
+                remarks: ''
+            };
+
+            // Call CreateFileChangesAcknowledgeService (without trailing slash)
+            fetch(API_ENDPOINT + '/' + changeId + '/acknowledge', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + apiToken
+                },
+                body: JSON.stringify(acknowledgeData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to acknowledge file change');
+                }
+                return response.json();
+            })
+            .then(data => {
+                loadFileChanges();
+                alert('File change acknowledged successfully');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Error acknowledging file change: ' + error.message);
+            });
+        }
+
+        // Show Error
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.clear();
+                window.location.href = '/accounts/login';
+            }
+        }
+    </script>
+</body>
+</html>

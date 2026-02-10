@@ -161,7 +161,7 @@ class FileChangeDetailsView(View):
 class FileChangeAcknowledgeView(View):
     def post(self, request, *args, **kwargs):
         data = json.loads(request.body)
-        data['acknowledged_by'] = request.user.id if hasattr(request, 'user') else None
+        data['user_id'] = request.user.id if hasattr(request, 'user') else None
 
         kwargs.update({'data': data})
         service_obj = ViewServices(service_name='acknowledge_file_change')
@@ -269,6 +269,17 @@ class MonitoringSessionDetailsView(View):
         status_code, data = service_obj.execute_service(*args, **kwargs)
         return JsonResponse(data, safe=False, status=status_code)
 
+
+@method_decorator(csrf_exempt, name='dispatch')
+class MonitoringSessionStartView(View):
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+
+        kwargs.update({'data': data})
+
+        service_obj = ViewServices(service_name='start_monitoring_session')
+        status_code, response = service_obj.execute_service(*args, **kwargs)
+        return JsonResponse(response, status=status_code)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class WhitelistRulesView(View):
