@@ -73,7 +73,7 @@ The File Integrity Monitoring System is a production-grade security application 
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/file-integrity-monitoring.git
+git clone https://github.com/khirwadkarshubham25/file_integrity_monitoring.git
 cd file-integrity-monitoring
 ```
 
