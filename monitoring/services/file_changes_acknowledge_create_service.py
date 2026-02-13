@@ -1,6 +1,6 @@
 from rest_framework import status
 
-from monitoring.models import FileChange
+from monitoring.models import FileChange, BaselineFile, Baseline
 from accounts.models import Users
 from monitoring.services.service_helper.monitoring_service_helper import MonitoringServiceHelper
 from file_integrity_monitoring.commons.generic_constants import GenericConstants
@@ -8,13 +8,16 @@ from file_integrity_monitoring.commons.commons import Commons
 
 
 class CreateFileChangesAcknowledgeService(MonitoringServiceHelper):
+    """
+
+    """
     def __init__(self):
         super().__init__()
 
     def get_request_params(self, *args, **kwargs):
         data = kwargs.get("data")
         return {
-            "change_id": data.get("file_change_id"),
+            "change_id": data.get("change_id"),
             "acknowledged_reason": data.get("acknowledged_reason", ""),
             "user_id": data.get("user_id")
         }
@@ -23,13 +26,11 @@ class CreateFileChangesAcknowledgeService(MonitoringServiceHelper):
         params = self.get_request_params(*args, **kwargs)
 
         if not params.get("change_id"):
-            self.error = True
             self.set_status_code(status_code=status.HTTP_400_BAD_REQUEST)
             return {"message": GenericConstants.FILE_CHANGE_ID_REQUIRED_MESSAGE}
 
         # Validate user_id
         if not params.get("user_id"):
-            self.error = True
             self.set_status_code(status_code=status.HTTP_400_BAD_REQUEST)
             return {"message": GenericConstants.USER_ID_REQUIRED_MESSAGE}
 
@@ -45,7 +46,6 @@ class CreateFileChangesAcknowledgeService(MonitoringServiceHelper):
         try:
             user = Users.objects.get(id=params.get("user_id"))
         except Users.DoesNotExist:
-            self.error = True
             self.set_status_code(status_code=status.HTTP_400_BAD_REQUEST)
             return {"message": GenericConstants.USER_NOT_FOUND_MESSAGE}
 
@@ -58,6 +58,22 @@ class CreateFileChangesAcknowledgeService(MonitoringServiceHelper):
         change.user = user
         change.acknowledged_reason = params.get("acknowledged_reason", "")
         change.save()
+
+        try:
+            baseline_files = BaselineFile.objects.get(id=change.baseline_file.id)
+            baseline = Baseline.objects.get(id=baseline_files.baseline.id)
+
+            if baseline.algorithm_type == "sha256":
+                baseline_files.sha256 = change.current_hash
+                baseline_files.save()
+
+            else:
+                baseline_files.sha512 = change.current_hash
+                baseline_files.save()
+
+        except BaselineFile.DoesNotExist:
+            self.set_status_code(status_code=status.HTTP_404_NOT_FOUND)
+            return {"message": GenericConstants.BASELINE_FILE_NOT_FOUND_ERROR_MESSAGE}
 
         # Create audit log
         Commons.create_audit_log(

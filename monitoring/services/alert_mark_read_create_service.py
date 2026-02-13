@@ -7,7 +7,7 @@ from file_integrity_monitoring.commons.generic_constants import GenericConstants
 from file_integrity_monitoring.commons.commons import Commons
 
 
-class MarkAlertReadService(MonitoringServiceHelper):
+class AlertMarkReadCreateService(MonitoringServiceHelper):
     """Service to mark an alert as read by a user"""
 
     def __init__(self):

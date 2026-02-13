@@ -142,7 +142,7 @@
 
         .search-box {
             flex: 1;
-            min-width: 250px;
+            min-width: 200px;
         }
 
         .search-box label {
@@ -265,12 +265,17 @@
             color: #c92a2a;
         }
 
-        .status-warning {
+        .status-high {
             background: #fff4e6;
             color: #d9480f;
         }
 
-        .status-info {
+        .status-medium {
+            background: #e3f2fd;
+            color: #1971c2;
+        }
+
+        .status-low {
             background: #e7f5ff;
             color: #1971c2;
         }
@@ -283,6 +288,29 @@
         .status-unread {
             background: #f8d7da;
             color: #721c24;
+        }
+
+        .change-type-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .change-modified {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .change-added {
+            background: #28a745;
+            color: white;
+        }
+
+        .change-deleted {
+            background: #dc3545;
+            color: white;
         }
 
         .action-buttons {
@@ -351,23 +379,26 @@
             border: 1px solid #f5c6cb;
         }
 
-        /* Modal Styles */
         .modal-overlay {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: rgba(0,0,0,0.5) !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            z-index: 1000 !important;
-            padding: 20px !important;
-            overflow: auto !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            overflow: auto;
         }
 
-        .modal-overlay > div {
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
             background: white;
             border-radius: 15px;
             padding: 30px;
@@ -377,7 +408,6 @@
             overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             animation: slideIn 0.3s ease-out;
-            margin: auto;
         }
 
         @keyframes slideIn {
@@ -393,9 +423,9 @@
 
         .modal-overlay input:focus,
         .modal-overlay textarea:focus {
-            border-color: #667eea !important;
-            box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.15) !important;
-            outline: none !important;
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.15);
+            outline: none;
         }
 
         @media (max-width: 768px) {
@@ -448,13 +478,13 @@
                     <a href="/monitoring/alerts" class="nav-link active">
                         <i class="fas fa-bell"></i> Alerts
                     </a>
-                    <a href="/monitoring/file-changes" class="nav-link">
+                    <a href="/monitoring/fileChanges" class="nav-link">
                         <i class="fas fa-file-alt"></i> File Changes
                     </a>
-                    <a href="/monitoring/monitoring-sessions" class="nav-link">
+                    <a href="/monitoring/monitoringSessions" class="nav-link">
                         <i class="fas fa-cogs"></i> Sessions
                     </a>
-                    <a href="/monitoring/whitelist-rules" class="nav-link">
+                    <a href="/monitoring/whitelistRules" class="nav-link">
                         <i class="fas fa-shield-alt"></i> Rules
                     </a>
                 </div>
@@ -493,7 +523,7 @@
         <div class="search-filter-section">
             <div class="search-box">
                 <label for="searchInput">Search Alerts</label>
-                <input type="text" id="searchInput" placeholder="Search by message or baseline..." onkeyup="searchAlerts()">
+                <input type="text" id="searchInput" placeholder="Search by title or file path..." onkeyup="searchAlerts()">
             </div>
 
             <div class="search-box">
@@ -501,8 +531,9 @@
                 <select id="severityFilter" onchange="filterAlerts()">
                     <option value="">All Severities</option>
                     <option value="critical">Critical</option>
-                    <option value="warning">Warning</option>
-                    <option value="info">Info</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
                 </select>
             </div>
 
@@ -510,14 +541,19 @@
                 <label for="statusFilter">Status</label>
                 <select id="statusFilter" onchange="filterAlerts()">
                     <option value="">All Statuses</option>
-                    <option value="read">Read</option>
-                    <option value="unread">Unread</option>
+                    <option value="true">Read</option>
+                    <option value="false">Unread</option>
                 </select>
             </div>
 
-            <button class="btn-mark-read" id="markReadBtn" style="display: none;">
-                <i class="fas fa-check-circle"></i> Mark Selected as Read
-            </button>
+            <div class="search-box">
+                <label for="archiveFilter">Archive Status</label>
+                <select id="archiveFilter" onchange="filterAlerts()">
+                    <option value="false">Active</option>
+                    <option value="true">Archived</option>
+                    <option value="">All</option>
+                </select>
+            </div>
         </div>
 
         <!-- Loading State -->
@@ -531,14 +567,12 @@
                 <table id="alertsTable">
                     <thead>
                         <tr>
-                            <th style="width: 40px;">
-                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
-                            </th>
-                            <th>Message</th>
-                            <th>Baseline</th>
+                            <th>Title</th>
+                            <th>File Path</th>
+                            <th>Change Type</th>
                             <th>Severity</th>
                             <th>Status</th>
-                            <th>Timestamp</th>
+                            <th>Created At</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -554,15 +588,31 @@
         </div>
     </div>
 
+    <!-- Details Modal -->
+    <div id="detailsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #333;">Alert Details</h3>
+                <button onclick="closeDetailsModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
+            </div>
+            <div id="detailsContent"></div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;" id="detailsActions">
+                <button onclick="closeDetailsModal()" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Configuration
         const API_ENDPOINT = '/monitoring/api/alerts';
-        let currentPage = 1;
+        const API_DETAILS_ENDPOINT = '/monitoring/api/alert-details';
+        const API_READ_ENDPOINT = '/monitoring/api/alert-read';
+        const API_ARCHIVE_ENDPOINT = '/monitoring/api/alert-archive';
         let allAlerts = [];
         let filteredAlerts = [];
-        let selectedAlerts = new Set();
+        let currentAlertId = null;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
@@ -582,98 +632,84 @@
             document.getElementById('refreshBtn').addEventListener('click', loadAlerts);
         }
 
-        // Load Alerts Data (GET - GetAlertsService)
-        function loadAlerts() {
-            const loadingState = document.getElementById('loadingState');
-            const alertsContent = document.getElementById('alertsContent');
-            const errorMessage = document.getElementById('errorMessage');
+        // Load Alerts
+        async function loadAlerts() {
+            try {
+                document.getElementById('loadingState').style.display = 'flex';
+                document.getElementById('alertsContent').style.display = 'none';
+                document.getElementById('errorMessage').style.display = 'none';
 
-            loadingState.style.display = 'flex';
-            alertsContent.style.display = 'none';
-            errorMessage.style.display = 'none';
+                const apiToken = localStorage.getItem('api_token');
+                const response = await fetch(`${API_ENDPOINT}?page=1&page_size=100&sort_by=created_at&sort_order=desc`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    }
+                });
 
-            const apiToken = localStorage.getItem('api_token');
+                if (!response.ok) throw new Error('Failed to load alerts');
+                const data = await response.json();
 
-            // Call GetAlertsService endpoint (without trailing slash)
-            fetch(API_ENDPOINT + '?page_size=100', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + apiToken
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load alerts');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // GetAlertsService response structure
                 allAlerts = data.alerts || [];
                 filteredAlerts = [...allAlerts];
-                selectedAlerts.clear();
                 displayAlerts();
-                loadingState.style.display = 'none';
-                alertsContent.style.display = 'block';
-            })
-            .catch(error => {
+
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('alertsContent').style.display = 'block';
+            } catch (error) {
                 console.error('Error:', error);
                 showError('Failed to load alerts: ' + error.message);
-                loadingState.style.display = 'none';
-            });
+                document.getElementById('loadingState').style.display = 'none';
+            }
         }
 
-        // Display Alerts in Table
+        // Display Alerts
         function displayAlerts() {
             const tableBody = document.getElementById('tableBody');
-            const selectAllCheckbox = document.getElementById('selectAll');
 
             if (filteredAlerts.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
-                            No alerts found
-                        </td>
-                    </tr>
-                `;
-                selectAllCheckbox.checked = false;
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #999;">No alerts found</td></tr>';
                 return;
             }
 
             tableBody.innerHTML = filteredAlerts.map(alert => {
-                const isSelected = selectedAlerts.has(alert.id);
-                const isUnread = !alert.read_at;
+                const isUnread = !alert.read;
 
                 return `
                     <tr class="${isUnread ? 'unread' : ''}">
-                        <td>
-                            <input type="checkbox" class="alert-checkbox" value="${alert.id}"
-                                ${isSelected ? 'checked' : ''}
-                                onchange="toggleAlertSelect(${alert.id}, this)">
-                        </td>
                         <td><strong>${alert.title}</strong></td>
-                        <td>${alert.baseline_name || '-'}</td>
+                        <td style="font-family: monospace; font-size: 12px;">${alert.file_path || 'N/A'}</td>
+                        <td>
+                            <span class="change-type-badge change-${alert.change_type}">
+                                ${alert.change_type ? alert.change_type.toUpperCase() : 'N/A'}
+                            </span>
+                        </td>
                         <td>
                             <span class="status-badge status-${alert.severity}">
                                 ${alert.severity.toUpperCase()}
                             </span>
                         </td>
                         <td>
-                            <span class="status-badge status-${isUnread ? 'unread' : 'read'}">
+                            <span class="status-badge ${isUnread ? 'status-unread' : 'status-read'}">
                                 ${isUnread ? 'UNREAD' : 'READ'}
                             </span>
                         </td>
-                        <td style="font-size: 12px;">${new Date(alert.created_at).toLocaleString()}</td>
+                        <td style="font-size: 12px;">${formatDate(alert.created_at)}</td>
                         <td>
                             <div class="action-buttons">
-                                <button class="btn-action" onclick="viewAlertDetails(${alert.id})" title="View Details">
+                                <button class="btn-action" onclick="viewDetails(${alert.alert_id})">
                                     <i class="fas fa-eye"></i> View
                                 </button>
                                 ${isUnread ? `
-                                    <button class="btn-action" onclick="markAlertRead(${alert.id})" title="Mark as Read">
-                                        <i class="fas fa-check"></i> Mark Read
-                                    </button>
+                                <button class="btn-action" onclick="markRead(${alert.alert_id})" style="color: #27ae60;">
+                                    <i class="fas fa-check"></i> Mark Read
+                                </button>
+                                ` : ''}
+                                ${!alert.is_archived ? `
+                                <button class="btn-action" onclick="archiveAlert(${alert.alert_id})" style="color: #f39c12;">
+                                    <i class="fas fa-archive"></i> Archive
+                                </button>
                                 ` : ''}
                             </div>
                         </td>
@@ -682,218 +718,175 @@
             }).join('');
         }
 
-        // Toggle Alert Selection
-        function toggleAlertSelect(alertId, checkbox) {
-            if (checkbox.checked) {
-                selectedAlerts.add(alertId);
-            } else {
-                selectedAlerts.delete(alertId);
-            }
-            updateMarkReadButton();
-        }
-
-        // Toggle Select All
-        function toggleSelectAll() {
-            const selectAllCheckbox = document.getElementById('selectAll');
-            const checkboxes = document.querySelectorAll('.alert-checkbox');
-
-            if (selectAllCheckbox.checked) {
-                checkboxes.forEach(checkbox => {
-                    selectedAlerts.add(parseInt(checkbox.value));
-                    checkbox.checked = true;
-                });
-            } else {
-                selectedAlerts.clear();
-                checkboxes.forEach(checkbox => checkbox.checked = false);
-            }
-            updateMarkReadButton();
-        }
-
-        // Update Mark Read Button Visibility
-        function updateMarkReadButton() {
-            const markReadBtn = document.getElementById('markReadBtn');
-            if (selectedAlerts.size > 0) {
-                markReadBtn.style.display = 'block';
-            } else {
-                markReadBtn.style.display = 'none';
-            }
-        }
-
-        // Search Alerts
+        // Search and Filter
         function searchAlerts() {
             applyFilters();
         }
 
-        // Filter Alerts
         function filterAlerts() {
             applyFilters();
         }
 
-        // Apply All Filters
         function applyFilters() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const severityFilter = document.getElementById('severityFilter').value;
-            const statusFilter = document.getElementById('statusFilter').value;
+            const severity = document.getElementById('severityFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const archive = document.getElementById('archiveFilter').value;
 
             filteredAlerts = allAlerts.filter(alert => {
-                // Search filter
                 const matchesSearch = !searchTerm ||
-                    alert.message.toLowerCase().includes(searchTerm) ||
-                    (alert.baseline_name && alert.baseline_name.toLowerCase().includes(searchTerm));
+                    alert.title.toLowerCase().includes(searchTerm) ||
+                    (alert.file_path && alert.file_path.toLowerCase().includes(searchTerm));
 
-                // Severity filter
-                const matchesSeverity = !severityFilter || alert.severity === severityFilter;
+                const matchesSeverity = !severity || alert.severity === severity;
+                const matchesStatus = !status || (status === 'true' ? alert.read === true : alert.read === false);
+                const matchesArchive = !archive || (archive === 'true' ? alert.is_archived === true : alert.is_archived === false);
 
-                // Status filter
-                const matchesStatus = !statusFilter ||
-                    (statusFilter === 'read' && alert.read_at) ||
-                    (statusFilter === 'unread' && !alert.read_at);
-
-                return matchesSearch && matchesSeverity && matchesStatus;
+                return matchesSearch && matchesSeverity && matchesStatus && matchesArchive;
             });
 
-            selectedAlerts.clear();
             displayAlerts();
         }
 
-        // View Alert Details (GetAlertDetailsService)
-        function viewAlertDetails(alertId) {
-            const apiToken = localStorage.getItem('api_token');
+        // View Details
+        async function viewDetails(alertId) {
+            try {
+                currentAlertId = alertId;
+                const apiToken = localStorage.getItem('api_token');
+                const response = await fetch(`${API_DETAILS_ENDPOINT}?alert_id=${alertId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    }
+                });
 
-            // Show loading state
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.innerHTML = `
-                <div style="text-align: center; padding: 40px;">
-                    <div class="spinner" style="margin: 0 auto;"></div>
-                    <p style="color: #666; margin-top: 15px;">Loading alert details...</p>
-                </div>
-            `;
-            document.body.appendChild(modal);
-
-            // Call GetAlertDetailsService (without trailing slash)
-            fetch(API_ENDPOINT + '/' + alertId, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + apiToken
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load alert details');
-                }
-                return response.json();
-            })
-            .then(data => {
-                modal.remove();
-                showAlertDetailsModal(data.alert);
-            })
-            .catch(error => {
+                if (!response.ok) throw new Error('Failed to load alert details');
+                const data = await response.json();
+                showDetailsModal(data.alert);
+            } catch (error) {
                 console.error('Error:', error);
-                modal.remove();
-                showError('Error loading alert details: ' + error.message);
-            });
-        }
-
-        // Show Alert Details Modal
-        function showAlertDetailsModal(alert) {
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-
-            const modalContent = document.createElement('div');
-            modalContent.style.cssText = `
-                background: white;
-                border-radius: 15px;
-                padding: 30px;
-                max-width: 600px;
-                width: 100%;
-                max-height: 90vh;
-                overflow-y: auto;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            `;
-
-            const isUnread = !alert.read_at;
-            const severityClass = `status-${alert.severity}`;
-
-            modalContent.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="margin: 0; color: #333;">Alert Details</h3>
-                    <button onclick="closeDetailModal(this)" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
-                </div>
-                <div style="color: #666; line-height: 1.8; font-size: 14px;">
-                    <p><strong>Message:</strong> ${alert.message}</p>
-                    <p><strong>Baseline:</strong> ${alert.baseline_name || 'N/A'}</p>
-                    <p><strong>Severity:</strong> <span class="status-badge ${severityClass}">${alert.severity.toUpperCase()}</span></p>
-                    <p><strong>Status:</strong> <span class="status-badge status-${isUnread ? 'unread' : 'read'}">${isUnread ? 'UNREAD' : 'READ'}</span></p>
-                    <p><strong>Description:</strong> ${alert.description || 'No description'}</p>
-                    <p><strong>Details:</strong> <code style="background: #f5f5f5; padding: 8px; border-radius: 4px; display: block; margin-top: 8px; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(alert.details || {}, null, 2)}</code></p>
-                    <p><strong>Created At:</strong> ${new Date(alert.created_at).toLocaleString()}</p>
-                    ${alert.read_at ? `<p><strong>Read At:</strong> ${new Date(alert.read_at).toLocaleString()}</p>` : ''}
-                </div>
-                <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    ${isUnread ? `
-                        <button onclick="closeDetailModal(this); markAlertRead(${alert.id})" style="flex: 1; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Mark as Read</button>
-                    ` : ''}
-                    <button onclick="closeDetailModal(this)" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Close</button>
-                </div>
-            `;
-
-            modal.appendChild(modalContent);
-            document.body.appendChild(modal);
-        }
-
-        // Close Detail Modal
-        function closeDetailModal(btn) {
-            const modal = btn.closest('.modal-overlay');
-            if (modal) {
-                modal.remove();
+                showError('Failed to load alert details: ' + error.message);
             }
         }
 
-        // Mark Alert as Read (MarkAlertReadService)
-        function markAlertRead(alertId) {
-            const apiToken = localStorage.getItem('api_token');
-            const userId = localStorage.getItem('user_id');
+        // Show Details Modal
+        function showDetailsModal(alert) {
+            const content = document.getElementById('detailsContent');
+            const isUnread = !alert.read;
 
-            const markReadData = {
-                alert_id: alertId,
-                user_id: userId
-            };
+            content.innerHTML = `
+                <div style="color: #666; line-height: 1.8; font-size: 14px;">
+                    <p><strong>Alert ID:</strong> ${alert.alert_id}</p>
+                    <p><strong>Title:</strong> ${alert.title}</p>
+                    <p><strong>Severity:</strong> <span class="status-badge status-${alert.severity}">${alert.severity.toUpperCase()}</span></p>
+                    <p><strong>Status:</strong> <span class="status-badge ${isUnread ? 'status-unread' : 'status-read'}">${isUnread ? 'UNREAD' : 'READ'}</span></p>
+                    <p><strong>Message:</strong></p>
+                    <pre style="background: #f5f5f5; padding: 12px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; font-size: 13px;">${alert.message}</pre>
+                    <p><strong>File Path:</strong></p>
+                    <code style="background: #f5f5f5; padding: 12px; border-radius: 4px; display: block; margin-bottom: 15px; word-break: break-all;">${alert.file_path || 'N/A'}</code>
+                    ${alert.change_type ? `<p><strong>Change Type:</strong> <span class="change-type-badge change-${alert.change_type}">${alert.change_type.toUpperCase()}</span></p>` : ''}
+                    <p><strong>Created At:</strong> ${formatDate(alert.created_at)}</p>
+                    ${alert.sent_at ? `<p><strong>Sent At:</strong> ${formatDate(alert.sent_at)}</p>` : ''}
+                    ${alert.alert_channels && alert.alert_channels.length > 0 ? `<p><strong>Alert Channels:</strong> ${alert.alert_channels.join(', ')}</p>` : ''}
+                    ${alert.metadata && Object.keys(alert.metadata).length > 0 ? `
+                        <p><strong>Metadata:</strong></p>
+                        <pre style="background: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 12px;">${JSON.stringify(alert.metadata, null, 2)}</pre>
+                    ` : ''}
+                </div>
+            `;
 
-            // Call MarkAlertReadService (without trailing slash)
-            fetch(API_ENDPOINT + '/' + alertId + '/mark-read', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + apiToken
-                },
-                body: JSON.stringify(markReadData)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to mark alert as read');
-                }
-                return response.json();
-            })
-            .then(data => {
-                loadAlerts();
-                alert('Alert marked as read');
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showError('Error marking alert as read: ' + error.message);
-            });
+            const actions = document.getElementById('detailsActions');
+            const buttons = [];
+
+            if (isUnread) {
+                buttons.push(`<button onclick="closeDetailsModal(); markRead(${alert.alert_id})" style="flex: 1; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Mark as Read</button>`);
+            }
+
+            if (!alert.is_archived) {
+                buttons.push(`<button onclick="closeDetailsModal(); archiveAlert(${alert.alert_id})" style="flex: 1; padding: 10px; background: #f39c12; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Archive</button>`);
+            }
+
+            buttons.push(`<button onclick="closeDetailsModal()" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Close</button>`);
+
+            actions.innerHTML = buttons.join('');
+            document.getElementById('detailsModal').classList.add('active');
         }
 
-        // Show Error
+        // Mark Alert as Read
+        async function markRead(alertId) {
+            try {
+                const apiToken = localStorage.getItem('api_token');
+                const response = await fetch(API_READ_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    },
+                    body: JSON.stringify({
+                        alert_id: alertId,
+                        user_id: localStorage.getItem('user_id')
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to mark alert as read');
+                const data = await response.json();
+
+                alert(data.message || 'Alert marked as read');
+                loadAlerts();
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to mark alert as read: ' + error.message);
+            }
+        }
+
+        // Archive Alert
+        async function archiveAlert(alertId) {
+            if (!confirm('Are you sure you want to archive this alert?')) return;
+
+            try {
+                const apiToken = localStorage.getItem('api_token');
+                const response = await fetch(API_ARCHIVE_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    },
+                    body: JSON.stringify({
+                        alert_id: alertId,
+                        user_id: localStorage.getItem('user_id')
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to archive alert');
+                const data = await response.json();
+
+                alert(data.message || 'Alert archived successfully');
+                loadAlerts();
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to archive alert: ' + error.message);
+            }
+        }
+
+        // Close Details Modal
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').classList.remove('active');
+        }
+
+        // Helper Functions
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleString();
+        }
+
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 5000);
         }
 
-        // Logout
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
                 localStorage.clear();

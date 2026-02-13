@@ -9,7 +9,7 @@ from monitoring.models import (
 from monitoring.services.service_helper.monitoring_service_helper import MonitoringServiceHelper
 
 
-class GetDashboardSummaryService(MonitoringServiceHelper):
+class DashboardSummaryGetService(MonitoringServiceHelper):
     """Service to get dashboard summary statistics"""
 
     def __init__(self):
@@ -135,7 +135,6 @@ class GetDashboardSummaryService(MonitoringServiceHelper):
                 unacknowledged_changes
             )
 
-            self.set_status_code(status_code=status.HTTP_200_OK)
             return {
                 "timestamp": now.isoformat(),
                 "health_status": health_status,

@@ -13,26 +13,27 @@ from accounts.services.login_user_service import LoginUserService
 from accounts.services.register_user_service import RegisterUserService
 from accounts.services.update_role_service import UpdateRoleService
 from accounts.services.update_users_service import UpdateUsersService
-from monitoring.services.archive_alert_service import ArchiveAlertService
-from monitoring.services.create_baseline_service import CreateBaselineService
-from monitoring.services.create_file_changes_acknowledge_service import CreateFileChangesAcknowledgeService
-from monitoring.services.create_whitelist_rule_service import CreateWhitelistRuleService
-from monitoring.services.delete_baseline_service import DeleteBaselineService
-from monitoring.services.delete_whitelist_rule_service import DeleteWhitelistRuleService
-from monitoring.services.get_alert_details_service import GetAlertDetailsService
-from monitoring.services.get_alerts_service import GetAlertsService
-from monitoring.services.get_baselines_service import GetBaselinesService
-from monitoring.services.get_dashboard_summary_service import GetDashboardSummaryService
-from monitoring.services.get_file_change_details_service import GetFileChangeDetailsService
-from monitoring.services.get_file_changes_service import GetFileChangesService
-from monitoring.services.get_monitoring_session_details_service import GetMonitoringSessionDetailsService
-from monitoring.services.get_monitoring_sessions_service import GetMonitoringSessionsService
-from monitoring.services.get_whiltelist_rule_details_service import GetWhitelistRuleDetailsService
-from monitoring.services.get_whitelist_rules_service import GetWhitelistRulesService
-from monitoring.services.mark_alert_read_service import MarkAlertReadService
-from monitoring.services.monitoring_session_service import MonitoringSessionService
-from monitoring.services.update_baseline_service import UpdateBaselineService
-from monitoring.services.update_whitelist_rule_service import UpdateWhitelistRuleService
+from monitoring.services.alert_archive_create_service import AlertArchiveCreateService
+from monitoring.services.baseline_create_service import BaselineCreateService
+from monitoring.services.baseline_get_details_service import BaselineGetDetailsService
+from monitoring.services.file_changes_acknowledge_create_service import CreateFileChangesAcknowledgeService
+from monitoring.services.create_whitelist_rule_service import WhitelistRuleCreateService
+from monitoring.services.baseline_delete_service import BaselineDeleteService
+from monitoring.services.whitelist_rule_delete_service import WhitelistRuleDeleteService
+from monitoring.services.alert_details_get_service import AlertDetailsGetService
+from monitoring.services.alerts_get_service import AlertsGetService
+from monitoring.services.baseline_get_service import BaselineGetService
+from monitoring.services.dashboard_summary_get_service import DashboardSummaryGetService
+from monitoring.services.file_change_details_get_service import FileChangeDetailsGetService
+from monitoring.services.file_changes_get_service import FileChangesGetService
+from monitoring.services.monitoring_session_details_get_service import MonitoringSessionDetailsGetService
+from monitoring.services.monitoring_sessions_get_service import MonitoringSessionsGetService
+from monitoring.services.whiltelist_rule_details_get_service import WhitelistRuleDetailsGetService
+from monitoring.services.whitelist_rules_get_service import WhitelistRulesGetService
+from monitoring.services.alert_mark_read_create_service import AlertMarkReadCreateService
+from monitoring.services.monitoring_session_create_service import MonitoringSessionCreateService
+from monitoring.services.baseline_update_service import BaselineUpdateService
+from monitoring.services.whitelist_rule_update_service import WhitelistRuleUpdateService
 
 
 class ViewServices:
@@ -61,6 +62,7 @@ class ViewServices:
             'create_baseline': self.CreateBaseline,
             'update_baseline': self.UpdateBaseline,
             'delete_baseline': self.DeleteBaseline,
+            'get_baseline_details': self.GetBaselineDetails,
             'get_alerts': self.GetAlerts,
             'get_alert_details': self.GetAlertDetails,
             'mark_alert_read': self.MarkAlertRead,
@@ -157,57 +159,62 @@ class ViewServices:
     class GetDashboardSummary:
         @staticmethod
         def get_instance():
-            return GetDashboardSummaryService()
+            return DashboardSummaryGetService()
 
     class GetBaselines:
         @staticmethod
         def get_instance():
-            return GetBaselinesService()
+            return BaselineGetService()
 
     class CreateBaseline:
         @staticmethod
         def get_instance():
-            return CreateBaselineService()
+            return BaselineCreateService()
 
     class UpdateBaseline:
         @staticmethod
         def get_instance():
-            return UpdateBaselineService()
+            return BaselineUpdateService()
 
     class DeleteBaseline:
         @staticmethod
         def get_instance():
-            return DeleteBaselineService()
+            return BaselineDeleteService()
+
+    class GetBaselineDetails:
+        @staticmethod
+        def get_instance():
+            return BaselineGetDetailsService()
 
     class GetAlerts:
         @staticmethod
         def get_instance():
-            return GetAlertsService()
+            return AlertsGetService()
 
     class GetAlertDetails:
         @staticmethod
         def get_instance():
-            return GetAlertDetailsService()
+            return AlertDetailsGetService()
 
     class MarkAlertRead:
         @staticmethod
         def get_instance():
-            return MarkAlertReadService()
+            return AlertMarkReadCreateService()
 
     class ArchiveAlertRead:
         @staticmethod
         def get_instance():
-            return ArchiveAlertService()
+            return AlertArchiveCreateService()
 
     class GetFileChanges:
         @staticmethod
         def get_instance():
-            return GetFileChangesService()
+            return FileChangesGetService()
 
     class GetFileChangeDetails:
         @staticmethod
         def get_instance():
-            return GetFileChangeDetailsService()
+            return FileChangeDetailsGetService()
 
     class AcknowledgeFileChange:
         @staticmethod
@@ -217,39 +224,39 @@ class ViewServices:
     class GetMonitoringSessions:
         @staticmethod
         def get_instance():
-            return GetMonitoringSessionsService()
+            return MonitoringSessionsGetService()
 
     class GetMonitoringSessionDetails:
         @staticmethod
         def get_instance():
-            return GetMonitoringSessionDetailsService()
+            return MonitoringSessionDetailsGetService()
 
     class StartMonitoringSession:
         @staticmethod
         def get_instance():
-            return MonitoringSessionService()
+            return MonitoringSessionCreateService()
 
     class GetWhitelistRules:
         @staticmethod
         def get_instance():
-            return GetWhitelistRulesService()
+            return WhitelistRulesGetService()
 
     class CreateWhitelistRule:
         @staticmethod
         def get_instance():
-            return CreateWhitelistRuleService()
+            return WhitelistRuleCreateService()
 
     class UpdateWhitelistRule:
         @staticmethod
         def get_instance():
-            return UpdateWhitelistRuleService()
+            return WhitelistRuleUpdateService()
 
     class DeleteWhitelistRule:
         @staticmethod
         def get_instance():
-            return DeleteWhitelistRuleService()
+            return WhitelistRuleDeleteService()
 
     class GetWhitelistRuleDetails:
         @staticmethod
         def get_instance():
-            return GetWhitelistRuleDetailsService()
+            return WhitelistRuleDetailsGetService()

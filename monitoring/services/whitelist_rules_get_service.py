@@ -5,7 +5,7 @@ from monitoring.models import WhitelistRule
 from monitoring.services.service_helper.monitoring_service_helper import MonitoringServiceHelper
 
 
-class GetWhitelistRulesService(MonitoringServiceHelper):
+class WhitelistRulesGetService(MonitoringServiceHelper):
     """Service to get whitelist rules with pagination and filtering"""
 
     def __init__(self):

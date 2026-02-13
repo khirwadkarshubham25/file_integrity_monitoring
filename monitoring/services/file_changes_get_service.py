@@ -5,11 +5,20 @@ from monitoring.services.service_helper.monitoring_service_helper import Monitor
 from file_integrity_monitoring.commons.generic_constants import GenericConstants
 
 
-class GetFileChangesService(MonitoringServiceHelper):
+class FileChangesGetService(MonitoringServiceHelper):
+    """
+    Get File Changes Service
+    """
     def __init__(self):
         super().__init__()
 
     def get_request_params(self, *args, **kwargs):
+        """
+        Get Request Parameters
+        @params args
+        @params kwargs
+        @returns request params
+        """
         data = kwargs.get("data")
         return {
             "baseline_id": data.get("baseline_id"),
@@ -23,6 +32,12 @@ class GetFileChangesService(MonitoringServiceHelper):
         }
 
     def get_data(self, *args, **kwargs):
+        """
+        Get file changes data
+        @params args
+        @params kwargs
+        @returns response data
+        """
         params = self.get_request_params(*args, **kwargs)
 
         queryset = FileChange.objects.all()
@@ -62,7 +77,7 @@ class GetFileChangesService(MonitoringServiceHelper):
         changes_data = []
         for change in paginated_changes:
             change_dict = {
-                "id": change.id,
+                "change_id": change.id,
                 "file_path": change.file_path,
                 "change_type": change.change_type,
                 "severity": change.severity,

@@ -5,7 +5,7 @@ from monitoring.services.service_helper.monitoring_service_helper import Monitor
 from file_integrity_monitoring.commons.generic_constants import GenericConstants
 
 
-class GetAlertDetailsService(MonitoringServiceHelper):
+class AlertDetailsGetService(MonitoringServiceHelper):
 
     def __init__(self):
         super().__init__()
@@ -36,7 +36,7 @@ class GetAlertDetailsService(MonitoringServiceHelper):
 
         # Serialize complete alert data
         alert_dict = {
-            "id": alert.id,
+            "alert_id": alert.id,
             "file_change_id": alert.file_change.id,
             "severity": alert.severity,
             "title": alert.title,

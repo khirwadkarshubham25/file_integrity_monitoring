@@ -1,28 +1,17 @@
-import hashlib
 import os
-import traceback
 
 from django.utils import timezone
 from rest_framework import status
 
 from file_integrity_monitoring.commons.commons import Commons
+from file_integrity_monitoring.commons.generic_constants import GenericConstants
 from monitoring.models import MonitoringSession, Baseline, FileChange, BaselineFile
-from monitoring.services.create_alert_service import CreateAlertService
+from monitoring.services.alert_create_service import AlertCreateService
 from monitoring.services.service_helper.monitoring_service_helper import MonitoringServiceHelper
 
 
-class MonitoringSessionService(MonitoringServiceHelper):
+class MonitoringSessionCreateService(MonitoringServiceHelper):
     """Service to orchestrate monitoring session, scan files, compare hashes, and create alerts"""
-
-    # Hash calculation settings
-    CHUNK_SIZE = 8192
-
-    # Scan type definitions
-    SCAN_TYPES = {
-        'full': 'full',  # Scan all files
-        'incremental': 'incremental',  # Scan only modified files
-        'quick': 'quick'  # Scan only size/timestamp changes
-    }
 
     def __init__(self):
         super().__init__()
@@ -45,7 +34,7 @@ class MonitoringSessionService(MonitoringServiceHelper):
         if not params.get("baseline_id"):
             self.error = True
             self.set_status_code(status_code=status.HTTP_400_BAD_REQUEST)
-            return {"message": "Baseline ID is required"}
+            return {"message": GenericConstants.BASELINE_NAME_REQUIRED_MESSAGE}
 
         # Get baseline
         try:
@@ -53,13 +42,12 @@ class MonitoringSessionService(MonitoringServiceHelper):
         except Baseline.DoesNotExist:
             self.error = True
             self.set_status_code(status_code=status.HTTP_404_NOT_FOUND)
-            return {"message": "Baseline not found"}
+            return {"message": GenericConstants.BASELINE_NOT_FOUND_MESSAGE}
 
         # Validate baseline has files scanned
         if baseline.baseline_files.count() == 0:
-            self.error = True
             self.set_status_code(status_code=status.HTTP_400_BAD_REQUEST)
-            return {"message": "Baseline has no files. Please rescan baseline."}
+            return {"message": GenericConstants.BASELINE_FILES_COUNT_ERROR_MESSAGE}
 
         # Create monitoring session
         session = MonitoringSession(
@@ -80,8 +68,8 @@ class MonitoringSessionService(MonitoringServiceHelper):
             )
 
             # Update session statistics
-            session.files_scanned = scan_results['files_scanned']
-            session.files_changed = scan_results['changes_found']
+            session.files_monitored = scan_results['files_scanned']
+            session.changes_detected = scan_results['changes_found']
             session.files_added = scan_results['files_added']
             session.files_deleted = scan_results['files_deleted']
             session.files_modified = scan_results['files_modified']
@@ -98,28 +86,15 @@ class MonitoringSessionService(MonitoringServiceHelper):
                 new_values={
                     "baseline_id": baseline.id,
                     "monitor_type": params.get("monitor_type"),
-                    "files_scanned": session.files_scanned,
-                    "files_changed": session.files_changed,
+                    "files_monitored": session.files_monitored,
+                    "changes_detected": session.changes_detected,
                     "alerts_created": scan_results['alerts_created']
                 }
             )
 
             self.set_status_code(status_code=status.HTTP_201_CREATED)
             return {
-                "message": "Monitoring session completed successfully",
-                "session_id": session.id,
-                "baseline_id": baseline.id,
-                "baseline_name": baseline.name,
-                "monitor_type": params.get("monitor_type"),
-                "status": session.status,
-                "files_scanned": session.files_scanned,
-                "files_changed": session.files_changed,
-                "files_added": session.files_added,
-                "files_deleted": session.files_deleted,
-                "files_modified": session.files_modified,
-                "alerts_created": scan_results['alerts_created'],
-                "duration_seconds": int((session.end_time - session.start_time).total_seconds()),
-                "errors": scan_results['errors']
+                "message": GenericConstants.MONITORING_SESSION_CREATE_SUCCESSFUL_MESSAGE,
             }
 
         except Exception as e:
@@ -138,6 +113,14 @@ class MonitoringSessionService(MonitoringServiceHelper):
             }
 
     def _scan_and_compare(self, baseline, monitor_type, user_id):
+        """
+        Scan directory and compare files against baseline.
+
+        Scan Types:
+        - full: Scan all files, calculate hashes, detect all changes
+        - incremental: Scan only recently modified files
+        - quick: Compare file size and mtime only (no hashing)
+        """
         results = {
             'files_scanned': 0,
             'changes_found': 0,
@@ -150,12 +133,15 @@ class MonitoringSessionService(MonitoringServiceHelper):
 
         try:
             # Get baseline files for comparison
-            baseline_files = BaselineFile.objects.filter(baseline=baseline)
-            baseline_files = {bf.file_path: bf for bf in baseline_files}
+            baseline_files = {bf.file_path: bf for bf in baseline.baseline_files.all()}
+
+            # Track which baseline files we found (for detecting deletions)
             found_baseline_files = set()
 
+            # Walk directory and scan files based on type
             for root, dirs, files in os.walk(baseline.path):
-                dirs[:] = [d for d in dirs if not self._should_exclude(
+                # Filter excluded directories
+                dirs[:] = [d for d in dirs if not self.should_exclude(
                     os.path.join(root, d),
                     baseline.exclude_patterns
                 )]
@@ -164,7 +150,8 @@ class MonitoringSessionService(MonitoringServiceHelper):
                 for file in files:
                     file_path = os.path.join(root, file)
 
-                    if self._should_exclude(file_path, baseline.exclude_patterns):
+                    # Skip excluded files
+                    if self.should_exclude(file_path, baseline.exclude_patterns):
                         continue
 
                     results['files_scanned'] += 1
@@ -187,11 +174,45 @@ class MonitoringSessionService(MonitoringServiceHelper):
                             results['files_modified'] += 1
                             results['alerts_created'] += 1
                     else:
-                        # File NOT in baseline - it was added
+                        stat_info = os.stat(file_path)
+                        file_size = stat_info.st_size
+                        permissions = stat_info.st_mode
+                        uid = stat_info.st_uid
+                        gid = stat_info.st_gid
+                        inode = stat_info.st_ino
+                        hard_links = stat_info.st_nlink
+                        mtime = stat_info.st_mtime
+                        atime = stat_info.st_atime
+                        ctime = stat_info.st_ctime
+
+                        sha512, sha256 = None, None
+                        if baseline.algorithm_type == GenericConstants.ALGORITHM_SHA512:
+                            is_success, sha512 = self.calculate_hash(file_path, baseline.algorithm_type)
+                        else:
+                            is_success, sha256 = self.calculate_hash(file_path, baseline.algorithm_type)
+                        baseline_file = BaselineFile.objects.create(
+                            baseline=baseline,
+                            file_path=file_path,
+                            file_name=os.path.basename(file_path),
+                            sha256=sha256,
+                            sha512=sha512,
+                            file_size=file_size,
+                            permissions=permissions,
+                            uid=uid,
+                            gid=gid,
+                            inode=inode,
+                            hard_links=hard_links,
+                            mtime=mtime,
+                            atime=atime,
+                            ctime=ctime,
+                            metadata={}
+                        )
                         change = self._create_file_change(
                             file_path=file_path,
                             baseline=baseline,
+                            baseline_file=baseline_file,
                             change_type='added',
+                            current_hash=self.calculate_hash(file_path, baseline.algorithm_type)[1],
                             severity='medium',
                             user_id=user_id
                         )
@@ -208,7 +229,9 @@ class MonitoringSessionService(MonitoringServiceHelper):
                     change = self._create_file_change(
                         file_path=file_path,
                         baseline=baseline,
+                        baseline_file=baseline_file,
                         change_type='deleted',
+                        current_hash=None,
                         severity='high',
                         user_id=user_id
                     )
@@ -253,7 +276,9 @@ class MonitoringSessionService(MonitoringServiceHelper):
                     change = self._create_file_change(
                         file_path=file_path,
                         baseline=baseline,
+                        baseline_file=baseline_file,
                         change_type='modified',
+                        current_hash=None,  # Not calculated in quick scan
                         severity=severity,
                         user_id=user_id
                     )
@@ -267,39 +292,46 @@ class MonitoringSessionService(MonitoringServiceHelper):
                     return None
 
                 # File modified - calculate hash and compare
-                current_hash = self._calculate_hash(file_path, baseline.algorithm_type)
+                is_success, current_hash = self.calculate_hash(file_path, baseline.algorithm_type)
 
                 if current_hash and current_hash != baseline_file.sha256:
                     change = self._create_file_change(
                         file_path=file_path,
                         baseline=baseline,
+                        baseline_file=baseline_file,
                         change_type='modified',
+                        current_hash=current_hash,
                         severity='critical',
                         user_id=user_id
                     )
                     return change
 
+            # FULL SCAN: Always calculate hash and compare
             else:  # monitor_type == 'full'
-                if current_permissions != baseline_file.permissions:
-                    change = self._create_file_change(
-                        file_path=file_path,
-                        baseline=baseline,
-                        change_type='permission',
-                        severity='medium',
-                        user_id=user_id
-                    )
-                    return change
-
-
-                current_hash = self._calculate_hash(file_path, baseline.algorithm_type)
+                is_success, current_hash = self.calculate_hash(file_path, baseline.algorithm_type)
 
                 # Check for hash change
                 if current_hash and current_hash != baseline_file.sha256:
                     change = self._create_file_change(
                         file_path=file_path,
                         baseline=baseline,
+                        baseline_file=baseline_file,
                         change_type='modified',
+                        current_hash=current_hash,
                         severity='critical',
+                        user_id=user_id
+                    )
+                    return change
+
+                # Check for permission changes
+                if current_permissions != baseline_file.permissions:
+                    change = self._create_file_change(
+                        file_path=file_path,
+                        baseline=baseline,
+                        baseline_file=baseline_file,
+                        change_type='permission',
+                        current_hash=current_hash,
+                        severity='medium',
                         user_id=user_id
                     )
                     return change
@@ -309,7 +341,7 @@ class MonitoringSessionService(MonitoringServiceHelper):
 
         return None
 
-    def _create_file_change(self, file_path, baseline, change_type, severity, user_id):
+    def _create_file_change(self, file_path, baseline, baseline_file, change_type, current_hash, severity, user_id):
         """Create FileChange record and associated alert"""
         try:
             # Check if FileChange already exists for this file
@@ -321,6 +353,8 @@ class MonitoringSessionService(MonitoringServiceHelper):
             ).first()
 
             if existing_change:
+                # Update existing change
+                existing_change.current_hash = current_hash or existing_change.current_hash
                 existing_change.severity = severity
                 existing_change.save()
                 file_change = existing_change
@@ -328,75 +362,23 @@ class MonitoringSessionService(MonitoringServiceHelper):
                 # Create new FileChange
                 file_change = FileChange.objects.create(
                     baseline=baseline,
+                    baseline_file=baseline_file,
                     file_path=file_path,
                     change_type=change_type,
+                    current_hash=current_hash,
                     severity=severity,
                     acknowledged=False,
                     user_id=user_id
                 )
 
             # Create alert for this change
-            alert_service = CreateAlertService()
-            response = alert_service.execute_service(
+            alert_service = AlertCreateService()
+            status_code, response = alert_service.execute_service(
                 data={'change_id': file_change.id, 'user_id': user_id}
             )
 
             return file_change
 
         except Exception as e:
-            traceback.print_exc()
             print(f"Error creating file change for {file_path}: {str(e)}")
-            return None
-
-    def _should_exclude(self, file_path, exclude_patterns):
-        """Check if file should be excluded based on patterns"""
-        if not exclude_patterns:
-            return False
-
-        file_name = os.path.basename(file_path)
-
-        for pattern in exclude_patterns:
-            # Simple wildcard matching
-            if pattern.startswith("*"):
-                # *.log matches anything ending with .log
-                if file_name.endswith(pattern[1:]):
-                    return True
-            elif pattern.endswith("*"):
-                # .git* matches anything starting with .git
-                if file_name.startswith(pattern[:-1]):
-                    return True
-            elif pattern == file_name:
-                # Exact match
-                return True
-            elif "*" in pattern:
-                # Handle patterns like: file*.txt
-                import fnmatch
-                if fnmatch.fnmatch(file_name, pattern):
-                    return True
-
-        return False
-
-    def _calculate_hash(self, file_path, algorithm="sha256"):
-        """Calculate hash of a file"""
-        try:
-            if algorithm == "sha256":
-                hash_obj = hashlib.sha256()
-            elif algorithm == "sha512":
-                hash_obj = hashlib.sha512()
-            elif algorithm == "md5":
-                hash_obj = hashlib.md5()
-            elif algorithm == "sha1":
-                hash_obj = hashlib.sha1()
-            else:
-                hash_obj = hashlib.sha256()  # Default
-
-            # Read file in chunks
-            with open(file_path, 'rb') as f:
-                while chunk := f.read(self.CHUNK_SIZE):
-                    hash_obj.update(chunk)
-
-            return hash_obj.hexdigest()
-
-        except Exception as e:
-            print(f"Error calculating hash for {file_path}: {str(e)}")
             return None

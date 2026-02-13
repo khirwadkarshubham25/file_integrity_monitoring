@@ -6,11 +6,6 @@ from accounts.models import Users
 
 
 class Baseline(models.Model):
-    STATUS_CHOICES = [
-        ('active', 'Active'),
-        ('inactive', 'Inactive'),
-        ('paused', 'Paused'),
-    ]
 
     HASH_ALGORITHM_CHOICES = [
         ('sha256', 'SHA256'),
@@ -23,9 +18,9 @@ class Baseline(models.Model):
     path = models.CharField(max_length=1024)
 
     version = models.PositiveIntegerField(default=1)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    status = models.CharField(max_length=20, default='active')
 
-    user = models.ForeignKey(Users, on_delete=models.PROTECT, related_name='baselines')
+    user = models.ForeignKey(Users, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -34,8 +29,6 @@ class Baseline(models.Model):
 
     exclude_patterns = JSONField(default=list, blank=True)
     algorithm_type = models.CharField(max_length=20, choices=HASH_ALGORITHM_CHOICES, default='sha256')
-
-    metadata = JSONField(default=dict, blank=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -51,12 +44,6 @@ class Baseline(models.Model):
     def file_count(self):
         """Get total files in this baseline"""
         return self.baseline_files.count()
-
-    def recent_changes_count(self):
-        """Get count of recent file changes"""
-        from datetime import timedelta
-        cutoff = timezone.now() - timedelta(days=7)
-        return self.file_changes.filter(detected_at__gte=cutoff).count()
 
 
 class BaselineFile(models.Model):
@@ -120,7 +107,7 @@ class FileChange(models.Model):
     ]
 
     id = models.BigAutoField(primary_key=True)
-    baseline = models.ForeignKey(Baseline, on_delete=models.CASCADE, related_name='file_changes')
+    baseline = models.ForeignKey(Baseline, on_delete=models.CASCADE)
     baseline_file = models.ForeignKey(BaselineFile, on_delete=models.SET_NULL, null=True, blank=True)
 
     file_path = models.CharField(max_length=1024, db_index=True)
@@ -128,7 +115,7 @@ class FileChange(models.Model):
 
     change_details = JSONField(default=dict)
     severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES, db_index=True)
-
+    current_hash = models.CharField(max_length=128, blank=True, null=True)
     expected = models.BooleanField(default=False)
     detected_at = models.DateTimeField(auto_now_add=True, db_index=True)
 

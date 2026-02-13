@@ -6,7 +6,7 @@ from monitoring.services.service_helper.monitoring_service_helper import Monitor
 from file_integrity_monitoring.commons.commons import Commons
 
 
-class CreateWhitelistRuleService(MonitoringServiceHelper):
+class WhitelistRuleCreateService(MonitoringServiceHelper):
     """Service to create a new whitelist rule"""
 
     def __init__(self):

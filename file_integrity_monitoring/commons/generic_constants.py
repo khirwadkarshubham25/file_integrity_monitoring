@@ -26,9 +26,13 @@ class GenericConstants:
 
     BASELINE_NAME_REQUIRED_MESSAGE = "Baseline name is required"
     BASELINE_PATH_REQUIRED_MESSAGE = "Baseline path is required"
+    BASELINE_PATH_DOES_NOT_EXIST = f"Path does not exist: {0}"
     BASELINE_NAME_ALREADY_EXISTS_MESSAGE = "Baseline with this name already exists"
     BASELINE_ID_REQUIRED_MESSAGE = "Baseline id is required"
     BASELINE_NOT_FOUND_MESSAGE = "Baseline not found"
+    BASELINE_FILES_COUNT_ERROR_MESSAGE = "Baseline Files count could not be computed"
+    BASELINE_FILE_HASH_ERROR_MESSAGE = "Baseline File hash could not be computed"
+    BASELINE_FILE_NOT_FOUND_ERROR_MESSAGE = "Baseline File not found error"
     BASELINE_CREATE_SUCCESSFUL_MESSAGE = "Baseline created successfully"
     BASELINE_UPDATE_SUCCESSFUL_MESSAGE = "Baseline updated successfully"
     BASELINE_DELETE_SUCCESSFUL_MESSAGE = "Baseline deleted successfully"
@@ -43,9 +47,12 @@ class GenericConstants:
     ALERT_ALREADY_ARCHIVED_MESSAGE = "Alert already archived"
     ALERT_ARCHIVED_SUCCESSFUL_MESSAGE = "Alert archived successfully"
     ALERT_ALREADY_EXISTS = "Alert already exists for this file change"
+    ALERT_CREATE_SUCCESSFUL_MESSAGE = "Alert created successfully"
 
     SESSION_ID_REQUIRED_MESSAGE = "Session ID is required"
     MONITORING_SESSION_NOT_FOUND_MESSAGE = "Monitoring session not found"
+    MONITORING_SESSION_CREATE_SUCCESSFUL_MESSAGE = "Monitoring session completed successfully"
+    MONITORING_SESSION_CREATE_ERROR_MESSAGE = "Monitoring session create could not be completed"
 
     FILE_PATTERN_REQUIRED_MESSAGE = "File pattern is required"
 
@@ -57,3 +64,16 @@ class GenericConstants:
 
     SYNC_FILE_THRESHOLD = 5000
     CHUNK_SIZE = 8192
+
+    STATUS_SCANNING = "scanning"
+    STATUS_READY = "ready"
+    STATUS_ERROR = "error"
+    STATUS_ACTIVE = "active"
+
+    ACTION_CREATE = "create"
+
+    RESOURCE_TYPE_BASELINE = "Baseline"
+    RESOURCE_TYPE_BASELINE_FILES = "Baseline Files"
+
+    ALGORITHM_SHA256 = "sha256"
+    ALGORITHM_SHA512 = "sha512"

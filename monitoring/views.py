@@ -62,13 +62,15 @@ class BaselinesView(View):
         sort_by = request.GET.get('sort_by', 'created_at')
         sort_order = request.GET.get('sort_order', 'desc')
         status = request.GET.get('status')
+        user_id = request.GET.get('user_id')
 
         data = {
             'page': page,
             'page_size': page_size,
             'sort_by': sort_by,
             'sort_order': sort_order,
-            'status': status
+            'status': status,
+            'user_id': user_id
         }
 
         kwargs.update({'data': data})
@@ -259,9 +261,9 @@ class MonitoringSessionsView(View):
 @method_decorator(csrf_exempt, name='dispatch')
 class MonitoringSessionDetailsView(View):
     def get(self, request, *args, **kwargs):
-        session_id = request.GET.get('session_id')
+        session_id = request.GET.get('monitor_session_id')
 
-        data = {'session_id': session_id}
+        data = {'monitor_session_id': session_id}
 
         kwargs.update({'data': data})
         service_obj = ViewServices(service_name='get_monitoring_session_details')

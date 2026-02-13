@@ -2,22 +2,37 @@ from monitoring.models import Baseline
 from monitoring.services.service_helper.monitoring_service_helper import MonitoringServiceHelper
 
 
-class GetBaselinesService(MonitoringServiceHelper):
-
+class BaselineGetService(MonitoringServiceHelper):
+    """
+    Get baseline data
+    """
     def __init__(self):
         super().__init__()
 
     def get_request_params(self, *args, **kwargs):
+        """
+        Get baseline data request params
+        @param args: request params
+        @param kwargs: request params
+        @return request params
+        """
         data = kwargs.get("data")
         return {
             "page": int(data.get("page", 1)),
             "page_size": int(data.get("page_size", 10)),
             "sort_by": data.get("sort_by", "created_at"),
             "sort_order": data.get("sort_order", "desc"),
+            "user_id": data.get("user_id"),
             "status": data.get("status")
         }
 
     def get_data(self, *args, **kwargs):
+        """
+        Get baseline data
+        @param args: request params
+        @param kwargs: request params
+        @return baseline data
+        """
         params = self.get_request_params(*args, **kwargs)
 
         queryset = Baseline.objects.all()
@@ -47,7 +62,6 @@ class GetBaselinesService(MonitoringServiceHelper):
                 "algorithm_type": baseline.algorithm_type,
                 "monitoring_enabled": baseline.monitoring_enabled,
                 "file_count": baseline.file_count(),
-                "recent_changes_count": baseline.recent_changes_count(),
                 "created_at": baseline.created_at,
             }
             baselines_data.append(baseline_dict)

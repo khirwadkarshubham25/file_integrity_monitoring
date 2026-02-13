@@ -7,14 +7,21 @@ from file_integrity_monitoring.commons.generic_constants import GenericConstants
 from file_integrity_monitoring.commons.commons import Commons
 
 
-class CreateAlertService(MonitoringServiceHelper):
-    """Service to create alerts from file changes"""
+class AlertCreateService(MonitoringServiceHelper):
+    """
+    Create alert from file change and return response
+    """
 
     def __init__(self):
         super().__init__()
 
     def get_request_params(self, *args, **kwargs):
-        """Extract and validate alert creation parameters"""
+        """
+        Extract and validate alert creation parameters
+        @params args: parameters for create alert
+        @params kwargs: parameters for create alert
+        @return request_params: parameters for create alert
+        """
         data = kwargs.get("data")
         return {
             "change_id": data.get("change_id"),
@@ -22,7 +29,12 @@ class CreateAlertService(MonitoringServiceHelper):
         }
 
     def get_data(self, *args, **kwargs):
-        """Create alert from file change and return response"""
+        """
+        Create alert from file change and return response
+        @params args: parameters for create alert
+        @params kwargs: parameters for create alert
+        @return response: parameters for create alert
+        """
         params = self.get_request_params(*args, **kwargs)
 
         # Validate change_id
@@ -41,7 +53,6 @@ class CreateAlertService(MonitoringServiceHelper):
 
         # Check if alert already exists for this change
         if Alert.objects.filter(file_change_id=change.id).exists():
-            self.error = True
             self.set_status_code(status_code=status.HTTP_400_BAD_REQUEST)
             return {"message": GenericConstants.ALERT_ALREADY_EXISTS}
 
@@ -82,9 +93,8 @@ class CreateAlertService(MonitoringServiceHelper):
             }
         )
 
-        self.set_status_code(status_code=status.HTTP_201_CREATED)
         return {
-            "message": "Alert created successfully",
+            "message": GenericConstants.ALERT_CREATE_SUCCESSFUL_MESSAGE,
         }
 
     def _generate_title(self, change):

@@ -10,13 +10,20 @@ from monitoring.models import Baseline
 from monitoring.services.service_helper.monitoring_service_helper import MonitoringServiceHelper
 
 
-class CreateBaselineService(MonitoringServiceHelper):
-
+class BaselineCreateService(MonitoringServiceHelper):
+    """
+        Create baseline and scan files
+    """
     def __init__(self):
         super().__init__()
 
     def get_request_params(self, *args, **kwargs):
-        """Extract and validate baseline creation parameters"""
+        """
+        Extract and validate baseline creation parameters
+        @param: *args
+        @param: **kwargs
+        @return Dictionary of request parameters
+        """
         data = kwargs.get("data")
         return {
             "name": data.get("name"),
@@ -29,41 +36,37 @@ class CreateBaselineService(MonitoringServiceHelper):
         }
 
     def get_data(self, *args, **kwargs):
-        """Create baseline and optionally scan files"""
+        """
+        Create baseline and scan files
+        @param: *args
+        @param: **kwargs
+        @return Response
+        """
         params = self.get_request_params(*args, **kwargs)
 
-        # Validate required fields
         if not params.get("name"):
-            self.error = True
             self.set_status_code(status_code=status.HTTP_400_BAD_REQUEST)
-            return {"message": "Baseline name is required"}
+            return {"message": GenericConstants.BASELINE_NAME_REQUIRED_MESSAGE}
 
         if not params.get("path"):
-            self.error = True
             self.set_status_code(status_code=status.HTTP_400_BAD_REQUEST)
-            return {"message": "Path is required"}
+            return {"message": GenericConstants.BASELINE_PATH_REQUIRED_MESSAGE}
 
-        # Check if baseline with same name already exists
         if Baseline.objects.filter(name=params.get("name")).exists():
-            self.error = True
             self.set_status_code(status_code=status.HTTP_400_BAD_REQUEST)
-            return {"message": "Baseline with this name already exists"}
+            return {"message": GenericConstants.BASELINE_NAME_ALREADY_EXISTS_MESSAGE}
 
         # Validate path exists
         if not os.path.isdir(params.get("path")):
-            self.error = True
             self.set_status_code(status_code=status.HTTP_400_BAD_REQUEST)
-            return {"message": f"Path does not exist: {params.get('path')}"}
+            return {"message": GenericConstants.BASELINE_PATH_DOES_NOT_EXIST.format(params.get('path'))}
 
-        # Get user
         try:
             user = Users.objects.get(id=params.get("user_id"))
         except Users.DoesNotExist:
-            self.error = True
             self.set_status_code(status_code=status.HTTP_400_BAD_REQUEST)
-            return {"message": "User not found"}
+            return {"message": GenericConstants.USER_NOT_FOUND_MESSAGE}
 
-        # Create baseline with "scanning" status
         baseline = Baseline.objects.create(
             name=params.get("name"),
             description=params.get("description"),
@@ -72,30 +75,41 @@ class CreateBaselineService(MonitoringServiceHelper):
             exclude_patterns=params.get("exclude_patterns"),
             monitoring_enabled=params.get("monitoring_enabled"),
             user=user,
-            status="scanning"
+            status=GenericConstants.STATUS_SCANNING
         )
 
         # Count files to determine approach
-        file_count = self.count_files(params.get("path"), params.get("exclude_patterns"))
+        is_success, file_count = self.count_files(params.get("path"), params.get("exclude_patterns"))
+
+        if not is_success:
+            self.set_status_code(status_code=status.HTTP_400_BAD_REQUEST)
+            return {"message": GenericConstants.BASELINE_FILES_COUNT_ERROR_MESSAGE}
 
         if file_count < GenericConstants.SYNC_FILE_THRESHOLD:
             try:
-                self.scan_baseline_files_sync(baseline, params)
-                baseline.status = "ready"
+                is_success, message = self.scan_baseline_files_sync(baseline, params)
+                if not is_success:
+                    return {"message": message}
+
+                baseline.status = GenericConstants.STATUS_ACTIVE
                 baseline.save()
 
-                self.set_status_code(status_code=status.HTTP_201_CREATED)
+                Commons.create_audit_log(
+                    user_id=params.get("user_id"),
+                    action=GenericConstants.ACTION_CREATE,
+                    resource_type=GenericConstants.RESOURCE_TYPE_BASELINE,
+                    resource_id=baseline.id,
+                    new_values={
+                        "name": baseline.name,
+                        "path": baseline.path,
+                    }
+                )
+
                 return {
-                    "message": "Baseline created and scanned successfully",
-                    "baseline_id": baseline.id,
-                    "name": baseline.name,
-                    "path": baseline.path,
-                    "status": "ready",
-                    "file_count": baseline.baseline_files.count(),
-                    "scanning": False
+                    "message": GenericConstants.BASELINE_CREATE_SUCCESSFUL_MESSAGE
                 }
             except Exception as e:
-                baseline.status = "error"
+                baseline.status = GenericConstants.STATUS_ERROR
                 baseline.save()
                 self.error = True
                 self.set_status_code(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -108,20 +122,12 @@ class CreateBaselineService(MonitoringServiceHelper):
             )
             thread.start()
 
-            self.set_status_code(status_code=status.HTTP_202_ACCEPTED)
             return {
-                "message": "Baseline created. File scanning in progress...",
-                "baseline_id": baseline.id,
-                "name": baseline.name,
-                "path": baseline.path,
-                "status": "scanning",
-                "file_count": 0,
-                "scanning": True,
-                "estimated_files": file_count
+                "message": GenericConstants.BASELINE_CREATE_SUCCESSFUL_MESSAGE
             }
 
 
-
+    # TODO - Future Scope
     def _scan_baseline_files_async(self, baseline_id, params):
         """Asynchronously scan directory (>= 5000 files) - runs in background thread"""
         try:

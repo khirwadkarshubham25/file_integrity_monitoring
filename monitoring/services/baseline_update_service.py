@@ -6,11 +6,20 @@ from monitoring.models import Baseline
 from monitoring.services.service_helper.monitoring_service_helper import MonitoringServiceHelper
 
 
-class UpdateBaselineService(MonitoringServiceHelper):
+class BaselineUpdateService(MonitoringServiceHelper):
+    """
+    Baseline update service
+    """
     def __init__(self):
         super().__init__()
 
     def get_request_params(self, *args, **kwargs):
+        """
+        Get request parameters
+        @params *args
+        @params **kwargs
+        @return request_params
+        """
         data = kwargs.get("data")
         return {
             "baseline_id": data.get("baseline_id"),
@@ -25,6 +34,12 @@ class UpdateBaselineService(MonitoringServiceHelper):
         }
 
     def get_data(self, *args, **kwargs):
+        """
+        Update baseline data
+        @params *args
+        @params **kwargs
+        @return response message
+        """
         params = self.get_request_params(*args, **kwargs)
 
         if not params.get("baseline_id"):

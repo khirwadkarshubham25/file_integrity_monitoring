@@ -3,6 +3,9 @@ import hashlib
 import os
 from abc import ABC
 
+from rest_framework import status
+
+from file_integrity_monitoring.commons.commons import Commons
 from file_integrity_monitoring.commons.generic_constants import GenericConstants
 from file_integrity_monitoring.services.base_service import BaseService
 from monitoring.models import BaselineFile
@@ -13,10 +16,21 @@ class MonitoringServiceHelper(BaseService, ABC):
         super().__init__()
 
     def set_status_code(self, *args, **kwargs):
+        """
+            Set the status code of the service
+            @param args:
+            @param kwargs:
+            @return: None
+        """
         self.status_code = kwargs.get('status_code')
 
     def count_files(self, path, exclude_patterns):
-        """Count total files in directory"""
+        """
+            Count total files in directory
+            @param path:
+            @param exclude_patterns:
+            @return: Count of files in directory
+        """
         try:
             count = 0
             for root, dirs, files in os.walk(path):
@@ -25,12 +39,17 @@ class MonitoringServiceHelper(BaseService, ABC):
                     file_path = os.path.join(root, file)
                     if not self.should_exclude(file_path, exclude_patterns):
                         count += 1
-            return count
+            return True, count
         except Exception as e:
-            print(f"Error counting files: {str(e)}")
-            return 0
+            return False, 0
 
     def scan_baseline_files_sync(self, baseline, params):
+        """
+            Scan baseline files
+            @param baseline
+            @param params
+            return Message
+        """
         path = params.get("path")
         algorithm_type = params.get("algorithm_type")
         exclude_patterns = params.get("exclude_patterns", [])
@@ -57,11 +76,15 @@ class MonitoringServiceHelper(BaseService, ABC):
                     atime = stat_info.st_atime
                     ctime = stat_info.st_ctime
 
-                    sha256_hash = self.calculate_hash(file_path, "sha256")
+                    is_success, sha256_hash = self.calculate_hash(file_path, "sha256")
 
                     sha512_hash = None
                     if algorithm_type == "sha512":
-                        sha512_hash = self.calculate_hash(file_path, "sha512")
+                        is_success, sha512_hash = self.calculate_hash(file_path, "sha512")
+
+                    if not is_success:
+                        self.set_status_code(status_code=status.HTTP_400_BAD_REQUEST)
+                        return False, GenericConstants.BASELINE_FILE_HASH_ERROR_MESSAGE
 
                     baseline_file = BaselineFile(
                         baseline=baseline,
@@ -90,6 +113,18 @@ class MonitoringServiceHelper(BaseService, ABC):
         if baseline_files:
             BaselineFile.objects.bulk_create(baseline_files, batch_size=1000)
 
+        Commons.create_audit_log(
+            user_id=params['user_id'],
+            action=GenericConstants.ACTION_CREATE,
+            resource_type=GenericConstants.RESOURCE_TYPE_BASELINE_FILES,
+            resource_id=baseline.id,
+            new_values={
+                "message": "Baseline files created",
+            }
+        )
+
+        return True, None
+
     @staticmethod
     def should_exclude(file_path, exclude_patterns):
         if not exclude_patterns:
@@ -117,10 +152,15 @@ class MonitoringServiceHelper(BaseService, ABC):
         return False
 
     @staticmethod
-    def calculate_hash(file_path, algorithm="sha256"):
-        print(file_path)
+    def calculate_hash(file_path, algorithm=GenericConstants.ALGORITHM_SHA256):
+        """
+            Calculate hash of file
+            @param file_path:
+            @param algorithm:
+            @return: Hash of file
+        """
         try:
-            if algorithm == "sha512":
+            if algorithm == GenericConstants.ALGORITHM_SHA512:
                 hash_obj = hashlib.sha512()
             else:
                 hash_obj = hashlib.sha256()
@@ -129,8 +169,7 @@ class MonitoringServiceHelper(BaseService, ABC):
                 while chunk := f.read(GenericConstants.CHUNK_SIZE):
                     hash_obj.update(chunk)
 
-            return hash_obj.hexdigest()
+            return True, hash_obj.hexdigest()
 
         except Exception as e:
-            print(f"Error calculating hash for {file_path}: {str(e)}")
-            return None
+            return False, None

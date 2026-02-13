@@ -346,23 +346,26 @@
             border: 1px solid #f5c6cb;
         }
 
-        /* Modal Styles */
         .modal-overlay {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: rgba(0,0,0,0.5) !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            z-index: 1000 !important;
-            padding: 20px !important;
-            overflow: auto !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            overflow: auto;
         }
 
-        .modal-overlay > div {
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
             background: white;
             border-radius: 15px;
             padding: 30px;
@@ -372,7 +375,6 @@
             overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             animation: slideIn 0.3s ease-out;
-            margin: auto;
         }
 
         @keyframes slideIn {
@@ -386,30 +388,11 @@
             }
         }
 
-        .diff-removed {
-            background: #ffe5e5;
-            color: #c92a2a;
-            padding: 10px;
-            border-radius: 4px;
-            margin: 10px 0;
-            font-family: monospace;
-            font-size: 12px;
-            white-space: pre-wrap;
-            word-break: break-all;
-            border-left: 3px solid #c92a2a;
-        }
-
-        .diff-added {
-            background: #d4edda;
-            color: #155724;
-            padding: 10px;
-            border-radius: 4px;
-            margin: 10px 0;
-            font-family: monospace;
-            font-size: 12px;
-            white-space: pre-wrap;
-            word-break: break-all;
-            border-left: 3px solid #155724;
+        .modal-overlay input:focus,
+        .modal-overlay textarea:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.15);
+            outline: none;
         }
 
         @media (max-width: 768px) {
@@ -462,13 +445,13 @@
                     <a href="/monitoring/alerts" class="nav-link">
                         <i class="fas fa-bell"></i> Alerts
                     </a>
-                    <a href="/monitoring/file-changes" class="nav-link active">
+                    <a href="/monitoring/fileChanges" class="nav-link active">
                         <i class="fas fa-file-alt"></i> File Changes
                     </a>
-                    <a href="/monitoring/monitoring-sessions" class="nav-link">
+                    <a href="/monitoring/monitoringSessions" class="nav-link">
                         <i class="fas fa-cogs"></i> Sessions
                     </a>
-                    <a href="/monitoring/whitelist-rules" class="nav-link">
+                    <a href="/monitoring/whitelistRules" class="nav-link">
                         <i class="fas fa-shield-alt"></i> Rules
                     </a>
                 </div>
@@ -543,8 +526,8 @@
                 <label for="statusFilter">Status</label>
                 <select id="statusFilter" onchange="filterChanges()">
                     <option value="">All Status</option>
-                    <option value="acknowledged">Acknowledged</option>
-                    <option value="unacknowledged">Unacknowledged</option>
+                    <option value="true">Acknowledged</option>
+                    <option value="false">Unacknowledged</option>
                 </select>
             </div>
         </div>
@@ -561,10 +544,10 @@
                     <thead>
                         <tr>
                             <th>File Path</th>
-                            <th>Baseline</th>
                             <th>Change Type</th>
                             <th>Severity</th>
                             <th>Status</th>
+                            <th>Expected</th>
                             <th>Detected At</th>
                             <th>Actions</th>
                         </tr>
@@ -581,17 +564,60 @@
         </div>
     </div>
 
+    <!-- Details Modal -->
+    <div id="detailsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #333;">File Change Details</h3>
+                <button onclick="closeDetailsModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
+            </div>
+            <div id="detailsContent"></div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;" id="detailsActions">
+                <button onclick="closeDetailsModal()" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acknowledge Modal -->
+    <div id="acknowledgeModal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #333;">Acknowledge File Change</h3>
+                <button onclick="closeAcknowledgeModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
+            </div>
+            <form id="acknowledgeForm" onsubmit="submitAcknowledge(event)">
+                <input type="hidden" id="acknowledgeChangeId">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Reason for Acknowledgment</label>
+                    <textarea id="acknowledgeReason" required placeholder="Enter reason for acknowledging this change..." style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; min-height: 100px;"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" style="flex: 1; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Acknowledge</button>
+                    <button type="button" onclick="closeAcknowledgeModal()" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Configuration
-        const API_ENDPOINT = '/monitoring/api/file-changes/';
-        const API_DETAILS_ENDPOINT = '/monitoring/api/file-change-details/';
-        const API_ACKNOWLEDGE_ENDPOINT = '/monitoring/api/file-change-acknowledge/';
-        const API_BASELINES_ENDPOINT = '/monitoring/api/baselines/';
+        const API_ENDPOINT = '/monitoring/api/file-changes';
+        const API_DETAILS_ENDPOINT = '/monitoring/api/file-change-details';
+        const API_ACKNOWLEDGE_ENDPOINT = '/monitoring/api/file-change-acknowledge';
+        const API_BASELINES_ENDPOINT = '/monitoring/api/baselines';
         let allChanges = [];
         let filteredChanges = [];
         let allBaselines = [];
+        let currentChangeId = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBaselines();
+            loadFileChanges();
+            setupEventListeners();
+        });
 
         // Setup Event Listeners
         function setupEventListeners() {
@@ -605,136 +631,113 @@
             document.getElementById('refreshBtn').addEventListener('click', loadFileChanges);
         }
 
-        // Get Baselines
-        function getBaselines() {
-            const apiToken = localStorage.getItem('api_token');
+        // Load Baselines
+        async function loadBaselines() {
+            try {
+                const apiToken = localStorage.getItem('api_token');
+                const userId = localStorage.getItem('user_id');
+                const response = await fetch(`${API_BASELINES_ENDPOINT}?page=1&page_size=100&user_id=${userId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    }
+                });
 
-            fetch(API_BASELINES_ENDPOINT, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + apiToken
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load baselines');
-                }
-                return response.json();
-            })
-            .then(data => {
+                if (!response.ok) throw new Error('Failed to load baselines');
+                const data = await response.json();
                 allBaselines = data.baselines || [];
                 populateBaselineFilter();
-            })
-            .catch(error => {
-                console.error('Error loading baselines:', error);
-            });
+            } catch (error) {
+                console.error('Error:', error);
+            }
         }
 
-        // Populate Baseline Filter Dropdown
+        // Populate Baseline Filter
         function populateBaselineFilter() {
-            const baselineFilter = document.getElementById('baselineFilter');
-            const currentValue = baselineFilter.value;
-
-            baselineFilter.innerHTML = '<option value="">All Baselines</option>';
-
+            const filter = document.getElementById('baselineFilter');
+            filter.innerHTML = '<option value="">All Baselines</option>';
             allBaselines.forEach(baseline => {
-                const option = document.createElement('option');
-                option.value = baseline.id;
-                option.textContent = baseline.name;
-                baselineFilter.appendChild(option);
+                const option = new Option(baseline.name, baseline.id);
+                filter.add(option);
             });
-
-            baselineFilter.value = currentValue;
         }
 
         // Load File Changes
-        function loadFileChanges() {
-            const loadingState = document.getElementById('loadingState');
-            const changesContent = document.getElementById('changesContent');
-            const errorMessage = document.getElementById('errorMessage');
+        async function loadFileChanges() {
+            try {
+                document.getElementById('loadingState').style.display = 'flex';
+                document.getElementById('changesContent').style.display = 'none';
+                document.getElementById('errorMessage').style.display = 'none';
 
-            loadingState.style.display = 'flex';
-            changesContent.style.display = 'none';
-            errorMessage.style.display = 'none';
+                const apiToken = localStorage.getItem('api_token');
+                const response = await fetch(`${API_ENDPOINT}?page=1&page_size=100&sort_by=detected_at&sort_order=desc`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    }
+                });
 
-            const apiToken = localStorage.getItem('api_token');
+                if (!response.ok) throw new Error('Failed to load file changes');
+                const data = await response.json();
 
-            fetch(API_ENDPOINT + '?page_size=100&page=1&sort_by=created_at&sort_order=desc', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + apiToken
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load file changes');
-                }
-                return response.json();
-            })
-            .then(data => {
                 allChanges = data.changes || [];
                 filteredChanges = [...allChanges];
                 displayChanges();
-                loadingState.style.display = 'none';
-                changesContent.style.display = 'block';
-            })
-            .catch(error => {
+
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('changesContent').style.display = 'block';
+            } catch (error) {
                 console.error('Error:', error);
                 showError('Failed to load file changes: ' + error.message);
-                loadingState.style.display = 'none';
-            });
+                document.getElementById('loadingState').style.display = 'none';
+            }
         }
 
-        // Display Changes in Table
+        // Display Changes
         function displayChanges() {
             const tableBody = document.getElementById('tableBody');
 
             if (filteredChanges.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
-                            No file changes found
-                        </td>
-                    </tr>
-                `;
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #999;">No file changes found</td></tr>';
                 return;
             }
 
             tableBody.innerHTML = filteredChanges.map(change => {
                 const isUnacknowledged = !change.acknowledged;
-                const changeTypeBadge = getChangeTypeBadge(change.change_type);
-                const severityBadge = getSeverityBadge(change.severity);
-                const statusBadge = getStatusBadge(change.acknowledged);
 
                 return `
                     <tr class="${isUnacknowledged ? 'unacknowledged-change' : ''}">
                         <td><strong style="font-family: monospace; font-size: 12px;">${change.file_path}</strong></td>
-                        <td>${change.baseline_name || '-'}</td>
                         <td>
-                            <span class="badge ${changeTypeBadge.class}">
-                                ${changeTypeBadge.text}
+                            <span class="badge change-type-${change.change_type}">
+                                ${change.change_type.toUpperCase()}
                             </span>
                         </td>
                         <td>
-                            <span class="badge ${severityBadge.class}">
-                                ${severityBadge.text}
+                            <span class="badge severity-${change.severity}">
+                                ${change.severity.toUpperCase()}
                             </span>
                         </td>
                         <td>
-                            <span class="badge ${statusBadge.class}">
-                                ${statusBadge.text}
+                            <span class="badge ${change.acknowledged ? 'status-acknowledged' : 'status-unacknowledged'}">
+                                ${change.acknowledged ? 'ACKNOWLEDGED' : 'UNACKNOWLEDGED'}
                             </span>
                         </td>
-                        <td style="font-size: 12px;">${new Date(change.created_at).toLocaleString()}</td>
+                        <td>
+                            <span class="badge ${change.expected ? 'status-acknowledged' : 'status-unacknowledged'}">
+                                ${change.expected ? 'EXPECTED' : 'UNEXPECTED'}
+                            </span>
+                        </td>
+                        <td style="font-size: 12px;">${formatDate(change.detected_at)}</td>
                         <td>
                             <div class="action-buttons">
-                                <button class="btn-action" onclick="viewChangeDetails(${change.id})" title="View Details">
+                                <button class="btn-action" onclick="viewDetails(${change.change_id})">
                                     <i class="fas fa-eye"></i> View
                                 </button>
-                                ${isUnacknowledged ? `
-                                <button class="btn-action" onclick="acknowledgeChange(${change.id})" title="Acknowledge" style="color: #27ae60;">
+                                ${!change.acknowledged ? `
+                                <button class="btn-action" onclick="openAcknowledgeModal(${change.change_id})" style="color: #27ae60;">
                                     <i class="fas fa-check"></i> Acknowledge
                                 </button>
                                 ` : ''}
@@ -745,46 +748,15 @@
             }).join('');
         }
 
-        // Get Change Type Badge
-        function getChangeTypeBadge(changeType) {
-            const badges = {
-                'added': { class: 'change-type-added', text: 'ADDED' },
-                'modified': { class: 'change-type-modified', text: 'MODIFIED' },
-                'deleted': { class: 'change-type-deleted', text: 'DELETED' },
-                'permission': { class: 'change-type-permission', text: 'PERMISSION' }
-            };
-            return badges[changeType] || { class: '', text: changeType.toUpperCase() };
-        }
-
-        // Get Severity Badge
-        function getSeverityBadge(severity) {
-            const badges = {
-                'critical': { class: 'severity-critical', text: 'CRITICAL' },
-                'high': { class: 'severity-high', text: 'HIGH' },
-                'medium': { class: 'severity-medium', text: 'MEDIUM' },
-                'low': { class: 'severity-low', text: 'LOW' }
-            };
-            return badges[severity] || { class: '', text: severity.toUpperCase() };
-        }
-
-        // Get Status Badge
-        function getStatusBadge(acknowledged) {
-            return acknowledged
-                ? { class: 'status-acknowledged', text: 'ACKNOWLEDGED' }
-                : { class: 'status-unacknowledged', text: 'UNACKNOWLEDGED' };
-        }
-
-        // Search Changes
+        // Search and Filter
         function searchChanges() {
             applyFilters();
         }
 
-        // Filter Changes
         function filterChanges() {
             applyFilters();
         }
 
-        // Apply All Filters
         function applyFilters() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const baselineId = document.getElementById('baselineFilter').value;
@@ -793,219 +765,156 @@
             const status = document.getElementById('statusFilter').value;
 
             filteredChanges = allChanges.filter(change => {
-                // Search filter
-                const matchesSearch = !searchTerm ||
-                    change.file_path.toLowerCase().includes(searchTerm);
-
-                // Baseline filter
+                const matchesSearch = !searchTerm || change.file_path.toLowerCase().includes(searchTerm);
                 const matchesBaseline = !baselineId || (change.baseline_id && change.baseline_id.toString() === baselineId);
-
-                // Change type filter
-                const matchesChangeType = !changeType || change.change_type === changeType;
-
-                // Severity filter
+                const matchesType = !changeType || change.change_type === changeType;
                 const matchesSeverity = !severity || change.severity === severity;
+                const matchesStatus = !status || (status === 'true' ? change.acknowledged === true : change.acknowledged === false);
 
-                // Status filter
-                let matchesStatus = true;
-                if (status === 'acknowledged') {
-                    matchesStatus = change.acknowledged === true;
-                } else if (status === 'unacknowledged') {
-                    matchesStatus = change.acknowledged === false;
-                }
-
-                return matchesSearch && matchesBaseline && matchesChangeType && matchesSeverity && matchesStatus;
+                return matchesSearch && matchesBaseline && matchesType && matchesSeverity && matchesStatus;
             });
 
             displayChanges();
         }
 
-        // View Change Details
-        function viewChangeDetails(changeId) {
-            const apiToken = localStorage.getItem('api_token');
+        // View Details
+        async function viewDetails(changeId) {
+            try {
+                currentChangeId = changeId;
+                const apiToken = localStorage.getItem('api_token');
+                const response = await fetch(`${API_DETAILS_ENDPOINT}?change_id=${changeId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    }
+                });
 
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.innerHTML = `
-                <div style="text-align: center; padding: 40px;">
-                    <div class="spinner" style="margin: 0 auto;"></div>
-                    <p style="color: #666; margin-top: 15px;">Loading change details...</p>
-                </div>
-            `;
-            document.body.appendChild(modal);
-
-            fetch(API_DETAILS_ENDPOINT + '?change_id=' + changeId, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + apiToken
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load change details');
-                }
-                return response.json();
-            })
-            .then(data => {
-                modal.remove();
-                showChangeDetailsModal(data.file_change);
-            })
-            .catch(error => {
+                if (!response.ok) throw new Error('Failed to load details');
+                const data = await response.json();
+                showDetailsModal(data.change);
+            } catch (error) {
                 console.error('Error:', error);
-                modal.remove();
-                showError('Error loading change details: ' + error.message);
-            });
+                showError('Failed to load details: ' + error.message);
+            }
         }
 
-        // Show Change Details Modal
-        function showChangeDetailsModal(change) {
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-
-            const modalContent = document.createElement('div');
-            modalContent.style.cssText = `
-                background: white;
-                border-radius: 15px;
-                padding: 30px;
-                max-width: 700px;
-                width: 100%;
-                max-height: 90vh;
-                overflow-y: auto;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            `;
-
-            const changeTypeBadge = getChangeTypeBadge(change.change_type);
-            const severityBadge = getSeverityBadge(change.severity);
-            const statusBadge = getStatusBadge(change.acknowledged);
-
-            let hashComparison = '';
-            if (change.previous_hash && change.current_hash) {
-                hashComparison = `
-                    <p><strong>Hash Comparison:</strong></p>
-                    <div class="diff-removed">
-                        <strong>Previous Hash (${change.previous_hash.substring(0, 8)}...):</strong><br>
-                        ${change.previous_hash}
-                    </div>
-                    <div class="diff-added">
-                        <strong>Current Hash (${change.current_hash.substring(0, 8)}...):</strong><br>
-                        ${change.current_hash}
-                    </div>
-                `;
-            } else if (change.previous_hash) {
-                hashComparison = `
-                    <p><strong>Previous Hash:</strong></p>
-                    <div class="diff-removed">${change.previous_hash}</div>
-                `;
-            } else if (change.current_hash) {
-                hashComparison = `
-                    <p><strong>Current Hash:</strong></p>
-                    <div class="diff-added">${change.current_hash}</div>
-                `;
-            }
-
-            modalContent.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="margin: 0; color: #333;">File Change Details</h3>
-                    <button onclick="closeChangeModal(this)" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
-                </div>
+        // Show Details Modal
+        function showDetailsModal(change) {
+            const content = document.getElementById('detailsContent');
+            content.innerHTML = `
                 <div style="color: #666; line-height: 1.8; font-size: 14px;">
+                    <p><strong>Change ID:</strong> ${change.change_id}</p>
                     <p><strong>File Path:</strong></p>
-                    <code style="background: #f5f5f5; padding: 12px; border-radius: 4px; font-family: monospace; display: block; margin-bottom: 15px; word-break: break-all;">${change.file_path}</code>
-
+                    <code style="background: #f5f5f5; padding: 12px; border-radius: 4px; display: block; margin-bottom: 15px; word-break: break-all;">${change.file_path}</code>
                     <p><strong>Baseline:</strong> ${change.baseline_name || 'N/A'}</p>
-                    <p><strong>Change Type:</strong> <span class="badge ${changeTypeBadge.class}" style="margin-left: 10px;">${changeTypeBadge.text}</span></p>
-                    <p><strong>Severity:</strong> <span class="badge ${severityBadge.class}" style="margin-left: 10px;">${severityBadge.text}</span></p>
-                    <p><strong>Status:</strong> <span class="badge ${statusBadge.class}" style="margin-left: 10px;">${statusBadge.text}</span></p>
-                    <p><strong>Detected At:</strong> ${new Date(change.detected_at).toLocaleString()}</p>
-                    ${change.acknowledged_at ? `<p><strong>Acknowledged At:</strong> ${new Date(change.acknowledged_at).toLocaleString()}</p>` : ''}
-
-                    ${hashComparison}
-                </div>
-                <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    ${!change.acknowledged ? `
-                    <button onclick="closeChangeModal(this); acknowledgeChange(${change.id})" style="flex: 1; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Acknowledge Change</button>
+                    <p><strong>Change Type:</strong> <span class="badge change-type-${change.change_type}">${change.change_type.toUpperCase()}</span></p>
+                    <p><strong>Severity:</strong> <span class="badge severity-${change.severity}">${change.severity.toUpperCase()}</span></p>
+                    <p><strong>Status:</strong> <span class="badge ${change.acknowledged ? 'status-acknowledged' : 'status-unacknowledged'}">${change.acknowledged ? 'ACKNOWLEDGED' : 'UNACKNOWLEDGED'}</span></p>
+                    <p><strong>Expected:</strong> ${change.expected ? 'Yes' : 'No'}</p>
+                    <p><strong>Detected At:</strong> ${formatDate(change.detected_at)}</p>
+                    ${change.current_hash ? `
+                        <p><strong>Current File Hash:</strong></p>
+                        <code style="background: #f5f5f5; padding: 12px; border-radius: 4px; display: block; margin-bottom: 15px; word-break: break-all; font-family: monospace; font-size: 12px; color: #27ae60;">${change.current_hash}</code>
                     ` : ''}
-                    <button onclick="closeChangeModal(this)" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Close</button>
+                    ${change.acknowledged ? `<p><strong>Acknowledged Reason:</strong> ${change.acknowledged_reason || 'N/A'}</p>` : ''}
+                    <p><strong>User:</strong> ${change.user_name}</p>
+                    ${Object.keys(change.change_details).length > 0 ? `
+                        <p><strong>Change Details:</strong></p>
+                        <pre style="background: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 12px;">${JSON.stringify(change.change_details, null, 2)}</pre>
+                    ` : ''}
+                    ${Object.keys(change.metadata).length > 0 ? `
+                        <p><strong>Metadata:</strong></p>
+                        <pre style="background: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 12px;">${JSON.stringify(change.metadata, null, 2)}</pre>
+                    ` : ''}
                 </div>
             `;
 
-            modal.appendChild(modalContent);
-            document.body.appendChild(modal);
-        }
-
-        // Close Change Modal
-        function closeChangeModal(btn) {
-            const modal = btn.closest('.modal-overlay');
-            if (modal) {
-                modal.remove();
-            }
-        }
-
-        // Acknowledge File Change
-        function acknowledgeChange(changeId) {
-            if (!confirm('Are you sure you want to acknowledge this file change?')) {
-                return;
+            const actions = document.getElementById('detailsActions');
+            if (!change.acknowledged) {
+                actions.innerHTML = `
+                    <button onclick="closeDetailsModal(); openAcknowledgeModal(${change.change_id})" style="flex: 1; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Acknowledge</button>
+                    <button onclick="closeDetailsModal()" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Close</button>
+                `;
+            } else {
+                actions.innerHTML = `
+                    <button onclick="closeDetailsModal()" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Close</button>
+                `;
             }
 
-            const apiToken = localStorage.getItem('api_token');
-            const userId = localStorage.getItem('user_id');
+            document.getElementById('detailsModal').classList.add('active');
+        }
 
-            const acknowledgeData = {
-                file_change_id: changeId,
-                user_id: userId
+        // Open Acknowledge Modal
+        function openAcknowledgeModal(changeId) {
+            currentChangeId = changeId;
+            document.getElementById('acknowledgeChangeId').value = changeId;
+            document.getElementById('acknowledgeReason').value = '';
+            document.getElementById('acknowledgeModal').classList.add('active');
+        }
+
+        // Submit Acknowledge
+        async function submitAcknowledge(event) {
+            event.preventDefault();
+
+            const payload = {
+                change_id: parseInt(document.getElementById('acknowledgeChangeId').value),
+                acknowledged_reason: document.getElementById('acknowledgeReason').value,
+                user_id: localStorage.getItem('user_id')
             };
 
-            fetch(API_ACKNOWLEDGE_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + apiToken
-                },
-                body: JSON.stringify(acknowledgeData)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to acknowledge change');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Close modal if open
-                const modal = document.querySelector('.modal-overlay');
-                if (modal) {
-                    modal.remove();
-                }
+            try {
+                const apiToken = localStorage.getItem('api_token');
+                const response = await fetch(API_ACKNOWLEDGE_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error('Failed to acknowledge change');
+                const data = await response.json();
+
+                alert(data.message || 'File change acknowledged successfully');
+                closeAcknowledgeModal();
                 loadFileChanges();
-                alert('File change acknowledged successfully');
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error:', error);
-                showError('Error acknowledging file change: ' + error.message);
-            });
+                showError('Failed to acknowledge change: ' + error.message);
+            }
         }
 
-        // Show Error
+        // Close Modals
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').classList.remove('active');
+        }
+
+        function closeAcknowledgeModal() {
+            document.getElementById('acknowledgeModal').classList.remove('active');
+            document.getElementById('acknowledgeForm').reset();
+        }
+
+        // Helper Functions
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleString();
+        }
+
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 5000);
         }
 
-        // Logout
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
                 localStorage.clear();
                 window.location.href = '/accounts/login';
             }
         }
-
-        // Initialize on DOM ready
-        document.addEventListener('DOMContentLoaded', function() {
-            getBaselines();
-            loadFileChanges();
-            setupEventListeners();
-        });
     </script>
 </body>
 </html>

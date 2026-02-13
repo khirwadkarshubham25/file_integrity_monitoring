@@ -5,32 +5,41 @@ from monitoring.services.service_helper.monitoring_service_helper import Monitor
 from file_integrity_monitoring.commons.generic_constants import GenericConstants
 
 
-class GetMonitoringSessionDetailsService(MonitoringServiceHelper):
+class MonitoringSessionDetailsGetService(MonitoringServiceHelper):
     """Service to retrieve complete monitoring session details by ID"""
 
     def __init__(self):
         super().__init__()
 
     def get_request_params(self, *args, **kwargs):
-        """Extract and validate session ID parameter"""
+        """
+        Extract and validate session ID parameter
+        @params args: positional parameters
+        @params kwargs: keyword parameters
+        @return request parameters
+        """
         data = kwargs.get("data")
         return {
-            "session_id": data.get("session_id")
+            "monitor_session_id": data.get("monitor_session_id")
         }
 
     def get_data(self, *args, **kwargs):
-        """Fetch complete monitoring session details and return response"""
+        """
+        Fetch complete monitoring session details and return response
+        @params args: positional parameters
+        @params kwargs: keyword parameters
+        @return response data
+        """
         params = self.get_request_params(*args, **kwargs)
 
         # Validate session_id
-        if not params.get("session_id"):
-            self.error = True
+        if not params.get("monitor_session_id"):
             self.set_status_code(status_code=status.HTTP_400_BAD_REQUEST)
             return {"message": GenericConstants.SESSION_ID_REQUIRED_MESSAGE}
 
         # Get monitoring session
         try:
-            session = MonitoringSession.objects.get(id=params.get("session_id"))
+            session = MonitoringSession.objects.get(id=params.get("monitor_session_id"))
         except MonitoringSession.DoesNotExist:
             self.error = True
             self.set_status_code(status_code=status.HTTP_404_NOT_FOUND)
@@ -38,7 +47,7 @@ class GetMonitoringSessionDetailsService(MonitoringServiceHelper):
 
         # Serialize complete monitoring session data
         session_dict = {
-            "id": session.id,
+            "monitor_session_id": session.id,
             "baseline_id": session.baseline.id,
             "monitor_type": session.monitor_type,
             "baseline_name": session.baseline.name,

@@ -6,7 +6,7 @@ from file_integrity_monitoring.commons.generic_constants import GenericConstants
 from file_integrity_monitoring.commons.commons import Commons
 
 
-class ArchiveAlertService(MonitoringServiceHelper):
+class AlertArchiveCreateService(MonitoringServiceHelper):
     """Service to archive an alert"""
 
     def __init__(self):
@@ -39,7 +39,6 @@ class ArchiveAlertService(MonitoringServiceHelper):
 
         # Check if already archived
         if alert.is_archived:
-            self.error = True
             self.set_status_code(status_code=status.HTTP_400_BAD_REQUEST)
             return {"message": GenericConstants.ALERT_ALREADY_ARCHIVED_MESSAGE}
 

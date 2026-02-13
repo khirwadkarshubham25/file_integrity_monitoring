@@ -6,14 +6,21 @@ from file_integrity_monitoring.commons.generic_constants import GenericConstants
 from file_integrity_monitoring.commons.commons import Commons
 
 
-class DeleteBaselineService(MonitoringServiceHelper):
-    """Service to delete a baseline"""
+class BaselineDeleteService(MonitoringServiceHelper):
+    """
+        Delete baseline
+    """
 
     def __init__(self):
         super().__init__()
 
     def get_request_params(self, *args, **kwargs):
-        """Extract and validate baseline deletion parameters"""
+        """
+        Extract and validate baseline deletion parameters
+        @param args
+        @param kwargs
+        @return request parameters
+        """
         data = kwargs.get("data")
         return {
             "baseline_id": data.get("baseline_id"),
@@ -21,6 +28,12 @@ class DeleteBaselineService(MonitoringServiceHelper):
         }
 
     def get_data(self, *args, **kwargs):
+        """
+        Delete baseline
+        @param args
+        @param kwargs
+        @return response data
+        """
         params = self.get_request_params(*args, **kwargs)
 
         if not params.get("baseline_id"):
@@ -51,7 +64,6 @@ class DeleteBaselineService(MonitoringServiceHelper):
             }
         )
 
-        self.set_status_code(status_code=status.HTTP_200_OK)
         return {
             "message": GenericConstants.BASELINE_DELETE_SUCCESSFUL_MESSAGE,
         }

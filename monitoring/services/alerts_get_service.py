@@ -4,11 +4,20 @@ from monitoring.models import Alert
 from monitoring.services.service_helper.monitoring_service_helper import MonitoringServiceHelper
 
 
-class GetAlertsService(MonitoringServiceHelper):
+class AlertsGetService(MonitoringServiceHelper):
+    """
+    Get Alerts Service
+    """
     def __init__(self):
         super().__init__()
 
     def get_request_params(self, *args, **kwargs):
+        """
+        Get Request Params
+        @params args: request params
+        @params kwargs: request params
+        @return request params
+        """
         data = kwargs.get("data")
         return {
             "page": int(data.get("page", 1)),
@@ -21,6 +30,12 @@ class GetAlertsService(MonitoringServiceHelper):
         }
 
     def get_data(self, *args, **kwargs):
+        """
+        Get Alerts Data
+        @params args: request params
+        @params kwargs: request params
+        @return request params
+        """
         params = self.get_request_params(*args, **kwargs)
 
         # Start with all alerts
@@ -59,7 +74,7 @@ class GetAlertsService(MonitoringServiceHelper):
         alerts_data = []
         for alert in paginated_alerts:
             alert_dict = {
-                "id": alert.id,
+                "alert_id": alert.id,
                 "title": alert.title,
                 "severity": alert.severity,
                 "file_path": alert.file_path,

@@ -229,24 +229,6 @@
             border-bottom: none;
         }
 
-        .status-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .status-active {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-inactive {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
         .action-buttons {
             display: flex;
             gap: 8px;
@@ -339,45 +321,47 @@
             transition: all 0.3s ease;
         }
 
-        .pagination button:hover {
+        .pagination button:hover:not(:disabled) {
             background: var(--primary-color);
             color: white;
             border-color: var(--primary-color);
         }
 
-        .pagination button.active {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         /* Modal Styles */
         .modal-overlay {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: rgba(0,0,0,0.5) !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            z-index: 1000 !important;
-            padding: 20px !important;
-            overflow: auto !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            overflow: auto;
         }
 
-        .modal-overlay > div {
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
             background: white;
             border-radius: 15px;
             padding: 30px;
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             animation: slideIn 0.3s ease-out;
-            margin: auto;
         }
 
         @keyframes slideIn {
@@ -392,10 +376,11 @@
         }
 
         .modal-overlay input:focus,
-        .modal-overlay textarea:focus {
-            border-color: #667eea !important;
-            box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.15) !important;
-            outline: none !important;
+        .modal-overlay textarea:focus,
+        .modal-overlay select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.15);
+            outline: none;
         }
 
         @media (max-width: 768px) {
@@ -448,13 +433,13 @@
                     <a href="/monitoring/alerts" class="nav-link">
                         <i class="fas fa-bell"></i> Alerts
                     </a>
-                    <a href="/monitoring/file-changes" class="nav-link">
+                    <a href="/monitoring/fileChanges" class="nav-link">
                         <i class="fas fa-file-alt"></i> File Changes
                     </a>
-                    <a href="/monitoring/monitoring-sessions" class="nav-link">
+                    <a href="/monitoring/monitoringSessions" class="nav-link">
                         <i class="fas fa-cogs"></i> Sessions
                     </a>
-                    <a href="/monitoring/whitelist-rules" class="nav-link">
+                    <a href="/monitoring/whitelistRules" class="nav-link">
                         <i class="fas fa-shield-alt"></i> Rules
                     </a>
                 </div>
@@ -516,13 +501,14 @@
                             <th>Algorithm</th>
                             <th>Status</th>
                             <th>Monitoring</th>
+                            <th>File Count</th>
                             <th>Created At</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                            <td colspan="8" style="text-align: center; padding: 40px; color: #999;">
                                 No baselines found
                             </td>
                         </tr>
@@ -531,7 +517,87 @@
             </div>
 
             <!-- Pagination -->
-            <div class="pagination" id="paginationContainer" style="display: none;">
+            <div class="pagination" id="paginationContainer" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div id="baselineModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modalTitle" style="margin: 0 0 20px 0; color: #333;">Create New Baseline</h3>
+            <form id="baselineForm" onsubmit="submitBaseline(event)">
+                <input type="hidden" id="baselineId">
+                <input type="hidden" id="isEditMode" value="false">
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Baseline Name *</label>
+                    <input type="text" id="baselineName" required style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Description</label>
+                    <textarea id="baselineDescription" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; min-height: 80px;"></textarea>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Path to Monitor *</label>
+                    <input type="text" id="baselinePath" required style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Algorithm Type</label>
+                    <select id="algorithmType" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: white;">
+                        <option value="sha256" selected>SHA256</option>
+                        <option value="sha512">SHA512</option>
+                        <option value="sha1">SHA1</option>
+                        <option value="md5">MD5</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Exclude Patterns</label>
+                    <input type="text" id="excludePatterns" placeholder="e.g., *.log, *.tmp (comma separated)" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                    <p style="font-size: 12px; color: #999; margin: 5px 0 0 0;">Separate patterns with commas</p>
+                </div>
+
+                <div style="margin-bottom: 15px;" id="statusGroup">
+                    <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Status</label>
+                    <select id="baselineStatus" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: white;">
+                        <option value="ready">Ready</option>
+                        <option value="pending">Pending</option>
+                        <option value="scanning">Scanning</option>
+                        <option value="error">Error</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">
+                        <input type="checkbox" id="monitoringEnabled" checked style="margin-right: 8px;">
+                        Enable Monitoring
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        <span id="submitButtonText">Create Baseline</span>
+                    </button>
+                    <button type="button" onclick="closeBaselineModal()" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Details Modal -->
+    <div id="detailsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 id="detailsTitle" style="margin: 0; color: #333;">Baseline Details</h3>
+                <button onclick="closeDetailsModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
+            </div>
+            <div id="detailsContent"></div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="editFromDetails()" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Edit</button>
+                <button onclick="closeDetailsModal()" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Close</button>
             </div>
         </div>
     </div>
@@ -541,9 +607,12 @@
     <script>
         // Configuration
         const API_ENDPOINT = '/monitoring/api/baselines';
+        const API_DETAIL_ENDPOINT = '/monitoring/api/baseline-details';
         let currentPage = 1;
+        let totalPages = 1;
         let allBaselines = [];
         let filteredBaselines = [];
+        let currentDetailId = null;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
@@ -560,14 +629,12 @@
             document.getElementById('settingsBtn').addEventListener('click', function() {
                 alert('Settings functionality - Coming soon');
             });
-            document.getElementById('addBaselineBtn').addEventListener('click', function() {
-                openCreateBaselineModal();
-            });
+            document.getElementById('addBaselineBtn').addEventListener('click', openCreateModal);
             document.getElementById('refreshBtn').addEventListener('click', loadBaselines);
         }
 
-        // Load Baselines Data (GET - GetBaselineService)
-        function loadBaselines() {
+        // Load Baselines
+        function loadBaselines(page = 1) {
             const loadingState = document.getElementById('loadingState');
             const baselinesContent = document.getElementById('baselinesContent');
             const errorMessage = document.getElementById('errorMessage');
@@ -577,9 +644,9 @@
             errorMessage.style.display = 'none';
 
             const apiToken = localStorage.getItem('api_token');
+            const userId = localStorage.getItem('user_id');
 
-            // Call GetBaselineService endpoint (without trailing slash)
-            fetch(API_ENDPOINT + '?page_size=100', {
+            fetch(`${API_ENDPOINT}?page=${page}&page_size=100&user_id=${userId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -587,16 +654,16 @@
                 }
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load baselines');
-                }
+                if (!response.ok) throw new Error('Failed to load baselines');
                 return response.json();
             })
             .then(data => {
-                // GetBaselineService response structure
                 allBaselines = data.baselines || [];
                 filteredBaselines = [...allBaselines];
+                totalPages = Math.ceil(data.total / data.page_size);
+                currentPage = data.page;
                 displayBaselines();
+                setupPagination();
                 loadingState.style.display = 'none';
                 baselinesContent.style.display = 'block';
             })
@@ -607,14 +674,14 @@
             });
         }
 
-        // Display Baselines in Table
+        // Display Baselines
         function displayBaselines() {
             const tableBody = document.getElementById('tableBody');
 
             if (filteredBaselines.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                        <td colspan="8" style="text-align: center; padding: 40px; color: #999;">
                             No baselines found
                         </td>
                     </tr>
@@ -622,548 +689,285 @@
                 return;
             }
 
-            const getStatusBadgeColor = (status) => {
-                switch(status) {
-                    case 'active': return '#d4edda';
-                    case 'inactive': return '#f8d7da';
-                    case 'pending': return '#fff3cd';
-                    case 'archived': return '#e2e3e5';
-                    default: return '#e3f2fd';
-                }
-            };
+            tableBody.innerHTML = filteredBaselines.map(baseline => `
+                <tr>
+                    <td><strong>${baseline.name}</strong></td>
+                    <td style="font-family: monospace; font-size: 12px; color: #666;">${baseline.path || '-'}</td>
+                    <td>
+                        <span style="background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                            ${(baseline.algorithm_type || 'sha256').toUpperCase()}
+                        </span>
+                    </td>
+                    <td>
+                        <span style="background: ${getStatusColor(baseline.status)}; color: ${getStatusTextColor(baseline.status)}; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                            ${(baseline.status || 'ready').toUpperCase()}
+                        </span>
+                    </td>
+                    <td>
+                        <span style="background: ${baseline.monitoring_enabled ? '#d4edda' : '#f8d7da'}; color: ${baseline.monitoring_enabled ? '#155724' : '#721c24'}; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                            ${baseline.monitoring_enabled ? '✓ Enabled' : '✗ Disabled'}
+                        </span>
+                    </td>
+                    <td>${baseline.file_count || 0}</td>
+                    <td style="font-size: 12px;">${formatDate(baseline.created_at)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action" onclick="viewDetails(${baseline.id})">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn-action" onclick="editBaseline(${baseline.id})">
+                                <i class="fas fa-pencil-alt"></i> Edit
+                            </button>
+                            <button class="btn-action btn-delete" onclick="deleteBaseline(${baseline.id}, '${baseline.name}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
 
-            const getStatusTextColor = (status) => {
-                switch(status) {
-                    case 'active': return '#155724';
-                    case 'inactive': return '#721c24';
-                    case 'pending': return '#856404';
-                    case 'archived': return '#383d41';
-                    default: return '#1976d2';
-                }
-            };
+        // Setup Pagination
+        function setupPagination() {
+            const container = document.getElementById('paginationContainer');
+            if (totalPages <= 1) {
+                container.style.display = 'none';
+                return;
+            }
 
-            tableBody.innerHTML = filteredBaselines.map(baseline => {
-                const statusColor = getStatusBadgeColor(baseline.status || 'active');
-                const statusTextColor = getStatusTextColor(baseline.status || 'active');
-
-                return `
-                    <tr>
-                        <td><strong>${baseline.name}</strong></td>
-                        <td style="font-family: monospace; font-size: 12px; color: #666;">${baseline.path || '-'}</td>
-                        <td>
-                            <span style="background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                                ${(baseline.algorithm_type || 'sha256').toUpperCase()}
-                            </span>
-                        </td>
-                        <td>
-                            <span style="background: ${statusColor}; color: ${statusTextColor}; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                                ${(baseline.status || 'active').toUpperCase()}
-                            </span>
-                        </td>
-                        <td>
-                            <span style="background: ${baseline.monitoring_enabled ? '#d4edda' : '#f8d7da'}; color: ${baseline.monitoring_enabled ? '#155724' : '#721c24'}; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                                ${baseline.monitoring_enabled ? '✓ Enabled' : '✗ Disabled'}
-                            </span>
-                        </td>
-                        <td style="font-size: 12px;">${new Date(baseline.created_at).toLocaleString()}</td>
-                        <td>
-                            <div class="action-buttons">
-                                <button class="btn-action" onclick="viewBaseline(${baseline.id})" title="View">
-                                    <i class="fas fa-eye"></i> View
-                                </button>
-                                <button class="btn-action" onclick="editBaseline(${baseline.id})" title="Edit">
-                                    <i class="fas fa-pencil-alt"></i> Edit
-                                </button>
-                                <button class="btn-action btn-delete" onclick="deleteBaseline(${baseline.id})" title="Delete">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+            container.style.display = 'flex';
+            container.innerHTML = `
+                <button onclick="loadBaselines(1)" ${currentPage === 1 ? 'disabled' : ''}>First</button>
+                <button onclick="loadBaselines(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+                <span style="padding: 8px 12px;">Page ${currentPage} of ${totalPages}</span>
+                <button onclick="loadBaselines(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+                <button onclick="loadBaselines(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>Last</button>
+            `;
         }
 
         // Search Baselines
         function searchBaselines() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-
-            if (searchTerm.trim() === '') {
-                filteredBaselines = [...allBaselines];
-            } else {
-                filteredBaselines = allBaselines.filter(baseline =>
-                    baseline.name.toLowerCase().includes(searchTerm) ||
-                    (baseline.description && baseline.description.toLowerCase().includes(searchTerm))
-                );
-            }
-
+            filteredBaselines = searchTerm.trim() === ''
+                ? [...allBaselines]
+                : allBaselines.filter(b => b.name.toLowerCase().includes(searchTerm) || (b.description && b.description.toLowerCase().includes(searchTerm)));
             displayBaselines();
         }
 
-        // View Baseline (GetBaselineService - detail endpoint)
-        function viewBaseline(id) {
-            const baseline = allBaselines.find(b => b.id === id);
-            if (baseline) {
-                const detailsModal = createDetailModal(baseline);
-                document.body.appendChild(detailsModal);
-                detailsModal.style.display = 'block';
+        // View Details
+        async function viewDetails(id) {
+            try {
+                currentDetailId = id;
+                const apiToken = localStorage.getItem('api_token');
+                const response = await fetch(`${API_DETAIL_ENDPOINT}?baseline_id=${id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to load details');
+                const data = await response.json();
+                const baseline = data.baseline;
+
+                document.getElementById('detailsTitle').textContent = baseline.name;
+                document.getElementById('detailsContent').innerHTML = `
+                    <div style="color: #666; line-height: 1.8; font-size: 14px;">
+                        <p><strong>ID:</strong> ${baseline.id}</p>
+                        <p><strong>Description:</strong> ${baseline.description || 'N/A'}</p>
+                        <p><strong>Path:</strong> <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px;">${baseline.path}</code></p>
+                        <p><strong>Algorithm:</strong> ${baseline.algorithm_type.toUpperCase()}</p>
+                        <p><strong>Version:</strong> ${baseline.version}</p>
+                        <p><strong>Status:</strong> <span style="background: ${getStatusColor(baseline.status)}; color: ${getStatusTextColor(baseline.status)}; padding: 4px 8px; border-radius: 4px;">${baseline.status.toUpperCase()}</span></p>
+                        <p><strong>Monitoring:</strong> ${baseline.monitoring_enabled ? '✓ Enabled' : '✗ Disabled'}</p>
+                        <p><strong>Active:</strong> ${baseline.is_active ? 'Yes' : 'No'}</p>
+                        <p><strong>File Count:</strong> ${baseline.file_count || 0}</p>
+                        <p><strong>Exclude Patterns:</strong> ${baseline.exclude_patterns.length > 0 ? baseline.exclude_patterns.join(', ') : 'None'}</p>
+                        <p><strong>Created:</strong> ${formatDate(baseline.created_at)}</p>
+                        <p><strong>Updated:</strong> ${formatDate(baseline.updated_at)}</p>
+                    </div>
+                `;
+                document.getElementById('detailsModal').classList.add('active');
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to load details: ' + error.message);
             }
         }
 
-        // Create Detail Modal
-        function createDetailModal(baseline) {
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 1000;
-                padding: 20px;
-            `;
-
-            const modalContent = document.createElement('div');
-            modalContent.style.cssText = `
-                background: white;
-                border-radius: 15px;
-                padding: 30px;
-                max-width: 600px;
-                width: 100%;
-                max-height: 90vh;
-                overflow-y: auto;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            `;
-
-            const excludePatterns = Array.isArray(baseline.exclude_patterns)
-                ? baseline.exclude_patterns.join(', ')
-                : (baseline.exclude_patterns || 'None');
-
-            const getStatusBadgeColor = (status) => {
-                switch(status) {
-                    case 'active': return '#d4edda';
-                    case 'inactive': return '#f8d7da';
-                    case 'pending': return '#fff3cd';
-                    case 'archived': return '#e2e3e5';
-                    default: return '#e3f2fd';
-                }
-            };
-
-            const getStatusTextColor = (status) => {
-                switch(status) {
-                    case 'active': return '#155724';
-                    case 'inactive': return '#721c24';
-                    case 'pending': return '#856404';
-                    case 'archived': return '#383d41';
-                    default: return '#1976d2';
-                }
-            };
-
-            const statusColor = getStatusBadgeColor(baseline.status || 'active');
-            const statusTextColor = getStatusTextColor(baseline.status || 'active');
-
-            modalContent.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="margin: 0; color: #333;">${baseline.name}</h3>
-                    <button onclick="closeDetailModal(this)" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
-                </div>
-                <div style="color: #666; line-height: 1.8; font-size: 14px;">
-                    <p><strong>ID:</strong> ${baseline.id}</p>
-                    <p><strong>Description:</strong> ${baseline.description || 'N/A'}</p>
-                    <p><strong>Path:</strong> <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; font-family: monospace; color: #333;">${baseline.path || 'N/A'}</code></p>
-                    <p><strong>Algorithm Type:</strong> <span style="background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-weight: 600;">${(baseline.algorithm_type || 'sha256').toUpperCase()}</span></p>
-                    <p><strong>Exclude Patterns:</strong> ${excludePatterns}</p>
-                    <p><strong>Monitoring:</strong> <span style="background: ${baseline.monitoring_enabled ? '#d4edda' : '#f8d7da'}; color: ${baseline.monitoring_enabled ? '#155724' : '#721c24'}; padding: 4px 8px; border-radius: 4px; font-weight: 600;">${baseline.monitoring_enabled ? '✓ Enabled' : '✗ Disabled'}</span></p>
-                    <p><strong>Status:</strong> <span style="background: ${statusColor}; color: ${statusTextColor}; padding: 4px 8px; border-radius: 4px; font-weight: 600;">${(baseline.status || 'active').toUpperCase()}</span></p>
-                    <p><strong>Created At:</strong> ${new Date(baseline.created_at).toLocaleString()}</p>
-                </div>
-                <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    <button onclick="closeDetailModal(this); editBaseline(${baseline.id})" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Edit</button>
-                    <button onclick="closeDetailModal(this)" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Close</button>
-                </div>
-            `;
-
-            modal.appendChild(modalContent);
-            return modal;
+        // Edit From Details
+        function editFromDetails() {
+            closeDetailsModal();
+            editBaseline(currentDetailId);
         }
 
-        // Close Detail Modal
-        function closeDetailModal(btn) {
-            const modal = btn.closest('.modal-overlay');
-            if (modal) {
-                modal.remove();
+        // Open Create Modal
+        function openCreateModal() {
+            document.getElementById('modalTitle').textContent = 'Create New Baseline';
+            document.getElementById('submitButtonText').textContent = 'Create Baseline';
+            document.getElementById('baselineForm').reset();
+            document.getElementById('isEditMode').value = 'false';
+            document.getElementById('baselineId').value = '';
+            document.getElementById('statusGroup').style.display = 'none';
+            document.getElementById('baselineModal').classList.add('active');
+        }
+
+        // Edit Baseline
+        async function editBaseline(id) {
+            try {
+                const apiToken = localStorage.getItem('api_token');
+                const response = await fetch(`${API_DETAIL_ENDPOINT}?baseline_id=${id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to load baseline');
+                const data = await response.json();
+                const baseline = data.baseline;
+
+                document.getElementById('modalTitle').textContent = 'Edit Baseline';
+                document.getElementById('submitButtonText').textContent = 'Update Baseline';
+                document.getElementById('isEditMode').value = 'true';
+                document.getElementById('baselineId').value = baseline.id;
+                document.getElementById('baselineName').value = baseline.name;
+                document.getElementById('baselineDescription').value = baseline.description || '';
+                document.getElementById('baselinePath').value = baseline.path;
+                document.getElementById('algorithmType').value = baseline.algorithm_type;
+                document.getElementById('excludePatterns').value = baseline.exclude_patterns.join(', ');
+                document.getElementById('baselineStatus').value = baseline.status;
+                document.getElementById('monitoringEnabled').checked = baseline.monitoring_enabled;
+                document.getElementById('statusGroup').style.display = 'block';
+                document.getElementById('baselineModal').classList.add('active');
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to load baseline: ' + error.message);
             }
         }
 
-        // Edit Baseline (UpdateBaselineService)
-        function editBaseline(id) {
-            const baseline = allBaselines.find(b => b.id === id);
-            if (baseline) {
-                const editModal = createEditModal(baseline);
-                document.body.appendChild(editModal);
-                editModal.style.display = 'block';
-            }
-        }
-
-        // Create Edit Modal
-        function createEditModal(baseline) {
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 1000;
-                padding: 20px;
-            `;
-
-            const modalContent = document.createElement('div');
-            modalContent.style.cssText = `
-                background: white;
-                border-radius: 15px;
-                padding: 30px;
-                max-width: 600px;
-                width: 100%;
-                max-height: 90vh;
-                overflow-y: auto;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            `;
-
-            const excludePatterns = Array.isArray(baseline.exclude_patterns)
-                ? baseline.exclude_patterns.join(', ')
-                : (baseline.exclude_patterns || '');
-
-            modalContent.innerHTML = `
-                <h3 style="margin: 0 0 20px 0; color: #333;">Edit Baseline: ${baseline.name}</h3>
-                <form onsubmit="submitEditBaseline(event, ${baseline.id}, this)">
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Baseline ID (Read-only)</label>
-                        <input type="text" value="${baseline.id}" disabled style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: #f5f5f5; color: #999;">
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Name *</label>
-                        <input type="text" value="${baseline.name}" name="name" required style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Description</label>
-                        <textarea name="description" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; min-height: 80px;">${baseline.description || ''}</textarea>
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Path to Monitor *</label>
-                        <input type="text" value="${baseline.path || ''}" name="path" required style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Algorithm Type</label>
-                        <select name="algorithm_type" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: white;">
-                            <option value="sha256" ${(baseline.algorithm_type || 'sha256') === 'sha256' ? 'selected' : ''}>SHA256</option>
-                            <option value="md5" ${baseline.algorithm_type === 'md5' ? 'selected' : ''}>MD5</option>
-                            <option value="sha1" ${baseline.algorithm_type === 'sha1' ? 'selected' : ''}>SHA1</option>
-                            <option value="sha512" ${baseline.algorithm_type === 'sha512' ? 'selected' : ''}>SHA512</option>
-                        </select>
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Exclude Patterns</label>
-                        <input type="text" name="exclude_patterns" value="${excludePatterns}" placeholder="e.g., *.log, *.tmp (comma separated)" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
-                        <p style="font-size: 12px; color: #999; margin: 5px 0 0 0;">Separate patterns with commas</p>
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">
-                            <input type="checkbox" name="monitoring_enabled" ${baseline.monitoring_enabled ? 'checked' : ''} style="margin-right: 8px;">
-                            Enable Monitoring
-                        </label>
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Status</label>
-                        <select name="status" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: white;">
-                            <option value="active" ${(baseline.status || 'active') === 'active' ? 'selected' : ''}>Active</option>
-                            <option value="inactive" ${baseline.status === 'inactive' ? 'selected' : ''}>Inactive</option>
-                            <option value="pending" ${baseline.status === 'pending' ? 'selected' : ''}>Pending</option>
-                            <option value="archived" ${baseline.status === 'archived' ? 'selected' : ''}>Archived</option>
-                        </select>
-                    </div>
-
-                    <input type="hidden" name="baseline_id" value="${baseline.id}">
-                    <input type="hidden" name="user_id" value="${baseline.user_id || localStorage.getItem('user_id')}">
-
-                    <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button type="submit" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Save Changes</button>
-                        <button type="button" onclick="closeModal(this)" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Cancel</button>
-                    </div>
-                </form>
-            `;
-
-            modal.appendChild(modalContent);
-            document.body.appendChild(modal);
-        }
-
-        // Submit Edit (UpdateBaselineService)
-        function submitEditBaseline(event, id, form) {
+        // Submit Baseline
+        async function submitBaseline(event) {
             event.preventDefault();
 
-            const formData = new FormData(form);
+            const isEdit = document.getElementById('isEditMode').value === 'true';
+            const baselineId = document.getElementById('baselineId').value;
+            const excludePatternsStr = document.getElementById('excludePatterns').value;
+            const excludePatterns = excludePatternsStr.split(',').map(p => p.trim()).filter(p => p);
 
-            // Parse exclude_patterns from comma-separated string to array
-            const excludePatternsStr = formData.get('exclude_patterns') || '';
-            const excludePatterns = excludePatternsStr
-                .split(',')
-                .map(p => p.trim())
-                .filter(p => p.length > 0);
-
-            const updateData = {
-                baseline_id: formData.get('baseline_id') || id,
-                name: formData.get('name'),
-                description: formData.get('description') || '',
-                path: formData.get('path'),
-                algorithm_type: formData.get('algorithm_type') || 'sha256',
-                exclude_patterns: excludePatterns.length > 0 ? excludePatterns : [],
-                monitoring_enabled: formData.has('monitoring_enabled'),
-                status: formData.get('status') || 'active',
-                user_id: formData.get('user_id') || localStorage.getItem('user_id')
+            const payload = {
+                name: document.getElementById('baselineName').value,
+                description: document.getElementById('baselineDescription').value,
+                path: document.getElementById('baselinePath').value,
+                algorithm_type: document.getElementById('algorithmType').value,
+                exclude_patterns: excludePatterns,
+                monitoring_enabled: document.getElementById('monitoringEnabled').checked,
+                user_id: localStorage.getItem('user_id')
             };
 
-            const apiToken = localStorage.getItem('api_token');
-            const modal = form.closest('.modal-overlay');
+            if (isEdit) {
+                payload.baseline_id = baselineId;
+                payload.status = document.getElementById('baselineStatus').value;
+            }
 
-            // Call UpdateBaselineService (without trailing slash)
-            fetch(API_ENDPOINT + id, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + apiToken
-                },
-                body: JSON.stringify(updateData)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to update baseline');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Close modal
-                if (modal) {
-                    modal.remove();
-                }
-                // Refresh the page to show baselines
-                loadBaselines();
-                alert('Baseline updated successfully');
-            })
-            .catch(error => {
+            const apiToken = localStorage.getItem('api_token');
+
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: isEdit ? 'PUT' : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error(`Failed to ${isEdit ? 'update' : 'create'} baseline`);
+                const data = await response.json();
+
+                alert(data.message);
+                closeBaselineModal();
+                loadBaselines(currentPage);
+            } catch (error) {
                 console.error('Error:', error);
-                showError('Error updating baseline: ' + error.message);
-            });
+                showError(error.message);
+            }
         }
 
-        // Delete Baseline (DeleteBaselineService)
-        function deleteBaseline(id) {
-            const baseline = allBaselines.find(b => b.id === id);
-            if (baseline && confirm(`Are you sure you want to delete "${baseline.name}"?`)) {
-                const apiToken = localStorage.getItem('api_token');
-                const userId = localStorage.getItem('user_id');
+        // Delete Baseline
+        async function deleteBaseline(id, name) {
+            if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
 
-                const deleteData = {
-                    baseline_id: id,
-                    user_id: userId
-                };
+            const apiToken = localStorage.getItem('api_token');
+            const userId = localStorage.getItem('user_id');
 
-                // Call DeleteBaselineService
-                fetch(API_ENDPOINT, {
+            try {
+                const response = await fetch(API_ENDPOINT, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + apiToken
                     },
-                    body: JSON.stringify(deleteData)
-                })
-                .then(response => {
-                    if (response.ok) {
-                        loadBaselines();
-                        alert('Baseline deleted successfully');
-                    } else {
-                        throw new Error('Failed to delete baseline');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showError('Error deleting baseline: ' + error.message);
+                    body: JSON.stringify({
+                        baseline_id: id,
+                        user_id: userId
+                    })
                 });
-            }
-        }
 
-        // Create New Baseline Modal (CreateBaselineService)
-        function openCreateBaselineModal() {
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 1000;
-                padding: 20px;
-            `;
+                if (!response.ok) throw new Error('Failed to delete baseline');
+                const data = await response.json();
 
-            const modalContent = document.createElement('div');
-            modalContent.style.cssText = `
-                background: white;
-                border-radius: 15px;
-                padding: 30px;
-                max-width: 600px;
-                width: 100%;
-                max-height: 90vh;
-                overflow-y: auto;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            `;
-
-            const userId = localStorage.getItem('user_id') || '';
-
-            modalContent.innerHTML = `
-                <h3 style="margin: 0 0 20px 0; color: #333;">Create New Baseline</h3>
-                <form onsubmit="submitCreateBaseline(event, this)">
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Baseline Name *</label>
-                        <input type="text" name="name" placeholder="Enter baseline name" required style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Description</label>
-                        <textarea name="description" placeholder="Enter baseline description" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; min-height: 80px;"></textarea>
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Path to Monitor *</label>
-                        <input type="text" name="path" placeholder="/path/to/monitor" required style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Algorithm Type</label>
-                        <select name="algorithm_type" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: white;">
-                            <option value="sha256" selected>SHA256</option>
-                            <option value="sha512">SHA512</option>
-                        </select>
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Exclude Patterns</label>
-                        <input type="text" name="exclude_patterns" placeholder="e.g., *.log, *.tmp (comma separated)" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
-                        <p style="font-size: 12px; color: #999; margin: 5px 0 0 0;">Separate patterns with commas</p>
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">
-                            <input type="checkbox" name="monitoring_enabled" checked style="margin-right: 8px;">
-                            Enable Monitoring
-                        </label>
-                    </div>
-
-                    <input type="hidden" name="user_id" value="${userId}">
-
-                    <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button type="submit" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Create Baseline</button>
-                        <button type="button" onclick="closeModal(this)" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Cancel</button>
-                    </div>
-                </form>
-            `;
-
-            modal.appendChild(modalContent);
-            document.body.appendChild(modal);
-        }
-
-        // Close Modal Helper
-        function closeModal(btn) {
-            const modal = btn.closest('.modal-overlay');
-            if (modal) {
-                modal.remove();
-            }
-        }
-
-        // Submit Create Baseline (CreateBaselineService)
-        function submitCreateBaseline(event, form) {
-            event.preventDefault();
-
-            const formData = new FormData(form);
-
-            // Parse exclude_patterns from comma-separated string to array
-            const excludePatternsStr = formData.get('exclude_patterns') || '';
-            const excludePatterns = excludePatternsStr
-                .split(',')
-                .map(p => p.trim())
-                .filter(p => p.length > 0);
-
-            const createData = {
-                name: formData.get('name'),
-                description: formData.get('description') || '',
-                path: formData.get('path'),
-                algorithm_type: formData.get('algorithm_type') || 'sha256',
-                exclude_patterns: excludePatterns.length > 0 ? excludePatterns : [],
-                monitoring_enabled: formData.has('monitoring_enabled'),
-                user_id: formData.get('user_id') || localStorage.getItem('user_id')
-            };
-
-            const apiToken = localStorage.getItem('api_token');
-            const modal = form.closest('.modal-overlay');
-
-            // Call CreateBaselineService (without trailing slash)
-            fetch(API_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + apiToken
-                },
-                body: JSON.stringify(createData)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to create baseline');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Close modal
-                if (modal) {
-                    modal.remove();
-                }
-                // Refresh the page to show baselines
-                loadBaselines();
-                alert('Baseline created successfully');
-            })
-            .catch(error => {
+                alert(data.message);
+                loadBaselines(currentPage);
+            } catch (error) {
                 console.error('Error:', error);
-                showError('Error creating baseline: ' + error.message);
-            });
+                showError('Failed to delete baseline: ' + error.message);
+            }
         }
 
-        // Show Error
+        // Close Modals
+        function closeBaselineModal() {
+            document.getElementById('baselineModal').classList.remove('active');
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').classList.remove('active');
+        }
+
+        // Helper Functions
+        function getStatusColor(status) {
+            const colors = {
+                ready: '#d4edda',
+                pending: '#fff3cd',
+                scanning: '#d1ecf1',
+                error: '#f8d7da'
+            };
+            return colors[status] || '#e3f2fd';
+        }
+
+        function getStatusTextColor(status) {
+            const colors = {
+                ready: '#155724',
+                pending: '#856404',
+                scanning: '#0c5460',
+                error: '#721c24'
+            };
+            return colors[status] || '#1976d2';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleString();
+        }
+
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 5000);
         }
 
-        // Logout
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
                 localStorage.clear();

@@ -385,23 +385,26 @@
             border: 1px solid #f5c6cb;
         }
 
-        /* Modal Styles */
         .modal-overlay {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: rgba(0,0,0,0.5) !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            z-index: 1000 !important;
-            padding: 20px !important;
-            overflow: auto !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            overflow: auto;
         }
 
-        .modal-overlay > div {
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
             background: white;
             border-radius: 15px;
             padding: 30px;
@@ -411,7 +414,6 @@
             overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             animation: slideIn 0.3s ease-out;
-            margin: auto;
         }
 
         @keyframes slideIn {
@@ -426,10 +428,11 @@
         }
 
         .modal-overlay input:focus,
-        .modal-overlay textarea:focus {
-            border-color: #667eea !important;
-            box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.15) !important;
-            outline: none !important;
+        .modal-overlay textarea:focus,
+        .modal-overlay select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.15);
+            outline: none;
         }
 
         @media (max-width: 768px) {
@@ -490,13 +493,13 @@
                     <a href="/monitoring/alerts" class="nav-link">
                         <i class="fas fa-bell"></i> Alerts
                     </a>
-                    <a href="/monitoring/file-changes" class="nav-link">
+                    <a href="/monitoring/fileChanges" class="nav-link">
                         <i class="fas fa-file-alt"></i> File Changes
                     </a>
-                    <a href="/monitoring/monitoring-sessions" class="nav-link active">
+                    <a href="/monitoring/monitoringSessions" class="nav-link active">
                         <i class="fas fa-cogs"></i> Sessions
                     </a>
-                    <a href="/monitoring/whitelist-rules" class="nav-link">
+                    <a href="/monitoring/whitelistRules" class="nav-link">
                         <i class="fas fa-shield-alt"></i> Rules
                     </a>
                 </div>
@@ -623,6 +626,57 @@
         </div>
     </div>
 
+    <!-- Start Session Modal -->
+    <div id="startModal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #333;">Start New Monitoring Session</h3>
+                <button onclick="closeStartModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
+            </div>
+            <form id="startForm" onsubmit="submitStartSession(event)">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Baseline *</label>
+                    <select id="baselineSelect" required style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; background: white;">
+                        <option value="">Select Baseline</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Monitor Type</label>
+                    <select id="monitorType" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; background: white;">
+                        <option value="full">Full Scan</option>
+                        <option value="incremental">Incremental</option>
+                        <option value="quick">Quick Scan</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Description</label>
+                    <textarea id="sessionDescription" placeholder="Enter session description" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; min-height: 100px;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" style="flex: 1; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Start Session</button>
+                    <button type="button" onclick="closeStartModal()" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="detailsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #333;">Session Details</h3>
+                <button onclick="closeDetailsModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
+            </div>
+            <div id="detailsContent"></div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="closeDetailsModal()" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -631,91 +685,16 @@
         const API_DETAILS_ENDPOINT = '/monitoring/api/monitoring-session-details';
         const API_START_ENDPOINT = '/monitoring/api/monitoring-session-start';
         const API_BASELINES_ENDPOINT = '/monitoring/api/baselines';
-        let currentPage = 1;
         let allSessions = [];
         let filteredSessions = [];
         let allBaselines = [];
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            getBaselines(); // Load baselines first
+            loadBaselines();
             loadMonitoringSessions();
             setupEventListeners();
         });
-
-        // Get Baselines (GetBaselinesService)
-        function getBaselines() {
-            const apiToken = localStorage.getItem('api_token');
-
-            // Call GetBaselinesService endpoint
-            fetch(API_BASELINES_ENDPOINT, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + apiToken
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load baselines');
-                }
-                return response.json();
-            })
-            .then(data => {
-                allBaselines = data.baselines || [];
-                enableStartSessionButton();
-            })
-            .catch(error => {
-                console.error('Error loading baselines:', error);
-                disableStartSessionButton();
-            });
-        }
-
-        // Enable Start Session Button if baselines available
-        function enableStartSessionButton() {
-            const startBtn = document.getElementById('startSessionBtn');
-            const message = document.getElementById('startBtnMessage');
-
-            if (allBaselines.length > 0) {
-                startBtn.disabled = false;
-                startBtn.style.opacity = '1';
-                startBtn.style.cursor = 'pointer';
-                message.textContent = 'Start a new monitoring session to begin tracking file changes';
-
-                // Populate baseline filter dropdown
-                populateBaselineFilter();
-            } else {
-                message.textContent = 'No baselines available. Please create a baseline first.';
-            }
-        }
-
-        // Populate Baseline Filter Dropdown
-        function populateBaselineFilter() {
-            const baselineFilter = document.getElementById('baselineFilter');
-            const currentValue = baselineFilter.value;
-
-            // Keep "All Baselines" option
-            baselineFilter.innerHTML = '<option value="">All Baselines</option>';
-
-            // Add baseline options from API data
-            allBaselines.forEach(baseline => {
-                const option = document.createElement('option');
-                option.value = baseline.id;
-                option.textContent = baseline.name;
-                baselineFilter.appendChild(option);
-            });
-
-            // Restore previous selection if it still exists
-            baselineFilter.value = currentValue;
-        }
-
-        // Disable Start Session Button
-        function disableStartSessionButton() {
-            const startBtn = document.getElementById('startSessionBtn');
-            startBtn.disabled = true;
-            startBtn.style.opacity = '0.5';
-            startBtn.style.cursor = 'not-allowed';
-        }
 
         // Setup Event Listeners
         function setupEventListeners() {
@@ -727,63 +706,102 @@
                 alert('Settings functionality - Coming soon');
             });
             document.getElementById('refreshBtn').addEventListener('click', loadMonitoringSessions);
-            document.getElementById('startSessionBtn').addEventListener('click', showStartSessionModal);
+            document.getElementById('startSessionBtn').addEventListener('click', showStartModal);
         }
 
-        // Load Monitoring Sessions (GET - GetMonitoringSessionsService)
-        function loadMonitoringSessions() {
-            const loadingState = document.getElementById('loadingState');
-            const sessionsContent = document.getElementById('sessionsContent');
-            const errorMessage = document.getElementById('errorMessage');
+        // Load Baselines
+        async function loadBaselines() {
+            try {
+                const apiToken = localStorage.getItem('api_token');
+                const userId = localStorage.getItem('user_id');
+                const response = await fetch(`${API_BASELINES_ENDPOINT}?page=1&page_size=100&user_id=${userId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    }
+                });
 
-            loadingState.style.display = 'flex';
-            sessionsContent.style.display = 'none';
-            errorMessage.style.display = 'none';
+                if (!response.ok) throw new Error('Failed to load baselines');
+                const data = await response.json();
+                allBaselines = data.baselines || [];
 
-            const apiToken = localStorage.getItem('api_token');
-
-            // Call GetMonitoringSessionsService endpoint (without trailing slash)
-            fetch(API_ENDPOINT + '?page_size=100', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + apiToken
+                if (allBaselines.length > 0) {
+                    enableStartButton();
+                    populateBaselineDropdowns();
+                } else {
+                    document.getElementById('startBtnMessage').textContent = 'No baselines available. Please create a baseline first.';
                 }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load monitoring sessions');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // GetMonitoringSessionsService response structure
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('startBtnMessage').textContent = 'Failed to load baselines';
+            }
+        }
+
+        // Enable Start Button
+        function enableStartButton() {
+            const btn = document.getElementById('startSessionBtn');
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            document.getElementById('startBtnMessage').textContent = 'Start a new monitoring session to begin tracking file changes';
+        }
+
+        // Populate Baseline Dropdowns
+        function populateBaselineDropdowns() {
+            const baselineSelect = document.getElementById('baselineSelect');
+            const baselineFilter = document.getElementById('baselineFilter');
+
+            baselineSelect.innerHTML = '<option value="">Select Baseline</option>';
+            baselineFilter.innerHTML = '<option value="">All Baselines</option>';
+
+            allBaselines.forEach(baseline => {
+                const option1 = new Option(baseline.name, baseline.id);
+                const option2 = new Option(baseline.name, baseline.id);
+                baselineSelect.add(option1);
+                baselineFilter.add(option2);
+            });
+        }
+
+        // Load Monitoring Sessions
+        async function loadMonitoringSessions() {
+            try {
+                document.getElementById('loadingState').style.display = 'flex';
+                document.getElementById('sessionsContent').style.display = 'none';
+                document.getElementById('errorMessage').style.display = 'none';
+
+                const apiToken = localStorage.getItem('api_token');
+                const response = await fetch(`${API_ENDPOINT}?page=1&page_size=100`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to load monitoring sessions');
+                const data = await response.json();
+
                 allSessions = data.monitoring_sessions || [];
                 filteredSessions = [...allSessions];
                 displaySessions();
                 updateStats();
-                loadingState.style.display = 'none';
-                sessionsContent.style.display = 'block';
-            })
-            .catch(error => {
+
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('sessionsContent').style.display = 'block';
+            } catch (error) {
                 console.error('Error:', error);
                 showError('Failed to load monitoring sessions: ' + error.message);
-                loadingState.style.display = 'none';
-            });
+                document.getElementById('loadingState').style.display = 'none';
+            }
         }
 
-        // Display Sessions in Table
+        // Display Sessions
         function displaySessions() {
             const tableBody = document.getElementById('tableBody');
 
             if (filteredSessions.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
-                            No monitoring sessions found
-                        </td>
-                    </tr>
-                `;
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #999;">No monitoring sessions found</td></tr>';
                 return;
             }
 
@@ -800,15 +818,13 @@
                                 ${session.status.toUpperCase()}
                             </span>
                         </td>
-                        <td style="font-size: 12px;">${new Date(session.start_time).toLocaleString()}</td>
-                        <td style="font-size: 12px;">${session.end_time ? new Date(session.end_time).toLocaleString() : '-'}</td>
+                        <td style="font-size: 12px;">${formatDate(session.start_time)}</td>
+                        <td style="font-size: 12px;">${session.end_time ? formatDate(session.end_time) : '-'}</td>
                         <td style="font-size: 12px;">${duration}</td>
                         <td>
-                            <div class="action-buttons">
-                                <button class="btn-action" onclick="viewSessionDetails(${session.id})" title="View Details">
-                                    <i class="fas fa-eye"></i> View
-                                </button>
-                            </div>
+                            <button class="btn-action" onclick="viewDetails(${session.monitor_session_id})">
+                                <i class="fas fa-eye"></i> View
+                            </button>
                         </td>
                     </tr>
                 `;
@@ -819,66 +835,54 @@
         function calculateDuration(startTime, endTime) {
             const start = new Date(startTime);
             const end = endTime ? new Date(endTime) : new Date();
-            const diff = Math.floor((end - start) / 1000); // seconds
+            const diff = Math.floor((end - start) / 1000);
 
             const hours = Math.floor(diff / 3600);
             const minutes = Math.floor((diff % 3600) / 60);
             const seconds = diff % 60;
 
-            if (hours > 0) {
-                return `${hours}h ${minutes}m`;
-            } else if (minutes > 0) {
-                return `${minutes}m ${seconds}s`;
-            } else {
-                return `${seconds}s`;
-            }
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            if (minutes > 0) return `${minutes}m ${seconds}s`;
+            return `${seconds}s`;
         }
 
         // Update Stats
         function updateStats() {
-            const statsGrid = document.getElementById('statsGrid');
-            const activeSessions = allSessions.filter(s => s.status === 'running').length;
-            const completedSessions = allSessions.filter(s => s.status === 'completed').length;
-            const failedSessions = allSessions.filter(s => s.status === 'failed').length;
-            const totalSessions = allSessions.length;
+            const active = allSessions.filter(s => s.status === 'running').length;
+            const completed = allSessions.filter(s => s.status === 'completed').length;
+            const failed = allSessions.filter(s => s.status === 'failed').length;
 
-            document.getElementById('activeSessions').textContent = activeSessions;
-            document.getElementById('completedSessions').textContent = completedSessions;
-            document.getElementById('failedSessions').textContent = failedSessions;
-            document.getElementById('totalSessions').textContent = totalSessions;
+            document.getElementById('activeSessions').textContent = active;
+            document.getElementById('completedSessions').textContent = completed;
+            document.getElementById('failedSessions').textContent = failed;
+            document.getElementById('totalSessions').textContent = allSessions.length;
 
-            if (totalSessions > 0) {
-                statsGrid.style.display = 'grid';
+            if (allSessions.length > 0) {
+                document.getElementById('statsGrid').style.display = 'grid';
             }
         }
 
-        // Search Sessions
+        // Search and Filter
         function searchSessions() {
             applyFilters();
         }
 
-        // Filter Sessions
         function filterSessions() {
             applyFilters();
         }
 
-        // Apply All Filters
         function applyFilters() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const statusFilter = document.getElementById('statusFilter').value;
             const baselineFilter = document.getElementById('baselineFilter').value;
 
             filteredSessions = allSessions.filter(session => {
-                // Search filter
                 const matchesSearch = !searchTerm ||
                     (session.baseline_name && session.baseline_name.toLowerCase().includes(searchTerm)) ||
                     (session.monitor_type && session.monitor_type.toLowerCase().includes(searchTerm));
 
-                // Status filter
                 const matchesStatus = !statusFilter || session.status === statusFilter;
-
-                // Baseline filter
-                const matchesBaseline = !baselineFilter || (session.baseline_id && session.baseline_id.toString() === baselineFilter);
+                const matchesBaseline = !baselineFilter || session.baseline_id.toString() === baselineFilter;
 
                 return matchesSearch && matchesStatus && matchesBaseline;
             });
@@ -886,232 +890,118 @@
             displaySessions();
         }
 
-        // View Session Details (GetMonitoringSessionDetailsService)
-        function viewSessionDetails(sessionId) {
-            const apiToken = localStorage.getItem('api_token');
+        // View Details
+        async function viewDetails(sessionId) {
+            try {
+                const apiToken = localStorage.getItem('api_token');
+                const response = await fetch(`${API_DETAILS_ENDPOINT}?monitor_session_id=${sessionId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    }
+                });
 
-            // Show loading state
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.innerHTML = `
-                <div style="text-align: center; padding: 40px;">
-                    <div class="spinner" style="margin: 0 auto;"></div>
-                    <p style="color: #666; margin-top: 15px;">Loading session details...</p>
-                </div>
-            `;
-            document.body.appendChild(modal);
-
-            // Call GetMonitoringSessionDetailsService (without trailing slash)
-            // Using query parameter for session ID
-            fetch(API_DETAILS_ENDPOINT + '?session_id=' + sessionId, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + apiToken
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load session details');
-                }
-                return response.json();
-            })
-            .then(data => {
-                modal.remove();
-                showSessionDetailsModal(data.monitoring_session);
-            })
-            .catch(error => {
+                if (!response.ok) throw new Error('Failed to load session details');
+                const data = await response.json();
+                showDetailsModal(data.monitoring_session);
+            } catch (error) {
                 console.error('Error:', error);
-                modal.remove();
-                showError('Error loading session details: ' + error.message);
-            });
-        }
-
-        // Show Session Details Modal
-        function showSessionDetailsModal(session) {
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-
-            const modalContent = document.createElement('div');
-            modalContent.style.cssText = `
-                background: white;
-                border-radius: 15px;
-                padding: 30px;
-                max-width: 600px;
-                width: 100%;
-                max-height: 90vh;
-                overflow-y: auto;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            `;
-
-            const duration = calculateDuration(session.start_time, session.end_time);
-
-            modalContent.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="margin: 0; color: #333;">Session Details</h3>
-                    <button onclick="closeSessionModal(this)" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
-                </div>
-                <div style="color: #666; line-height: 1.8; font-size: 14px;">
-                    <p><strong>Baseline:</strong> ${session.baseline_name || 'N/A'}</p>
-                    <p><strong>Monitor Type:</strong> ${session.monitor_type || 'N/A'}</p>
-                    <p><strong>Status:</strong> <span class="status-badge status-${session.status}">${session.status.toUpperCase()}</span></p>
-                    <p><strong>Start Time:</strong> ${new Date(session.start_time).toLocaleString()}</p>
-                    ${session.end_time ? `<p><strong>End Time:</strong> ${new Date(session.end_time).toLocaleString()}</p>` : ''}
-                    <p><strong>Duration:</strong> ${duration}</p>
-                    <p><strong>Files Monitored:</strong> ${session.files_scanned || 'N/A'}</p>
-                    <p><strong>Changes Detected:</strong> ${session.changes_detected || 0}</p>
-                    <p><strong>Alerts Generated:</strong> ${session.alerts_generated || 0}</p>
-                    ${session.description ? `<p><strong>Description:</strong> ${session.description}</p>` : ''}
-                    ${session.details ? `
-                        <p><strong>Details:</strong></p>
-                        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; white-space: pre-wrap; max-height: 200px; overflow-y: auto;">${JSON.stringify(session.details, null, 2)}</div>
-                    ` : ''}
-                </div>
-                <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    <button onclick="closeSessionModal(this)" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Close</button>
-                </div>
-            `;
-
-            modal.appendChild(modalContent);
-            document.body.appendChild(modal);
-        }
-
-        // Close Session Modal
-        function closeSessionModal(btn) {
-            const modal = btn.closest('.modal-overlay');
-            if (modal) {
-                modal.remove();
+                showError('Failed to load session details: ' + error.message);
             }
         }
 
-        // Show Start Session Modal
-        function showStartSessionModal() {
-            // Check if baselines loaded
+        // Show Details Modal
+        function showDetailsModal(session) {
+            const content = document.getElementById('detailsContent');
+            content.innerHTML = `
+                <div style="color: #666; line-height: 1.8; font-size: 14px;">
+                    <p><strong>Session ID:</strong> ${session.monitor_session_id}</p>
+                    <p><strong>Baseline:</strong> ${session.baseline_name}</p>
+                    <p><strong>Path:</strong> <code>${session.baseline_path}</code></p>
+                    <p><strong>Monitor Type:</strong> ${session.monitor_type}</p>
+                    <p><strong>Status:</strong> <span class="status-badge status-${session.status}">${session.status.toUpperCase()}</span></p>
+                    <p><strong>Start Time:</strong> ${formatDate(session.start_time)}</p>
+                    ${session.end_time ? `<p><strong>End Time:</strong> ${formatDate(session.end_time)}</p>` : ''}
+                    <p><strong>Duration:</strong> ${session.duration_seconds ? session.duration_seconds.toFixed(3) + 's' : 'N/A'}</p>
+                    <p><strong>Files Scanned:</strong> ${session.files_scanned || 0}</p>
+                    <p><strong>Files Changed:</strong> ${session.files_changed || 0}</p>
+                    <p><strong>Files Critical:</strong> ${session.files_critical || 0}</p>
+                    <p><strong>Files Added:</strong> ${session.files_added || 0}</p>
+                    <p><strong>Files Deleted:</strong> ${session.files_deleted || 0}</p>
+                    ${session.error_message ? `<p><strong>Error:</strong> <span style="color: #ef4444;">${session.error_message}</span></p>` : ''}
+                    <p><strong>User:</strong> ${session.user_name}</p>
+                </div>
+            `;
+            document.getElementById('detailsModal').classList.add('active');
+        }
+
+        // Show Start Modal
+        function showStartModal() {
             if (allBaselines.length === 0) {
                 alert('No baselines available. Please create a baseline first.');
                 return;
             }
-
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-
-            const modalContent = document.createElement('div');
-            modalContent.style.cssText = `
-                background: white;
-                border-radius: 15px;
-                padding: 30px;
-                max-width: 600px;
-                width: 100%;
-                max-height: 90vh;
-                overflow-y: auto;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            `;
-
-            // Build baseline options from API data
-            const baselineOptions = allBaselines.map(baseline => `
-                <option value="${baseline.id}">${baseline.name}</option>
-            `).join('');
-
-            modalContent.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="margin: 0; color: #333;">Start New Monitoring Session</h3>
-                    <button onclick="closeStartModal(this)" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
-                </div>
-                <form onsubmit="submitStartSession(event, this)">
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Baseline *</label>
-                        <select name="baseline_id" required style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: white;">
-                            <option value="">Select Baseline</option>
-                            ${baselineOptions}
-                        </select>
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Monitor Type</label>
-                        <select name="monitor_type" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: white;">
-                            <option value="full">Full Scan</option>
-                            <option value="incremental">Incremental</option>
-                            <option value="quick">Quick Scan</option>
-                        </select>
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Description</label>
-                        <textarea name="description" placeholder="Enter session description" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; box-sizing: border-box; min-height: 100px;"></textarea>
-                    </div>
-
-                    <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button type="submit" style="flex: 1; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Start Session</button>
-                        <button type="button" onclick="closeStartModal(this)" style="flex: 1; padding: 10px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Cancel</button>
-                    </div>
-                </form>
-            `;
-
-            modal.appendChild(modalContent);
-            document.body.appendChild(modal);
+            document.getElementById('startModal').classList.add('active');
         }
 
-        // Close Start Modal
-        function closeStartModal(btn) {
-            const modal = btn.closest('.modal-overlay');
-            if (modal) {
-                modal.remove();
-            }
-        }
-
-        // Submit Start Session (MonitoringSessionService)
-        function submitStartSession(event, form) {
+        // Submit Start Session
+        async function submitStartSession(event) {
             event.preventDefault();
 
-            const formData = new FormData(form);
-            const startSessionData = {
-                baseline_id: formData.get('baseline_id'),
-                monitor_type: formData.get('monitor_type') || 'full',
-                description: formData.get('description') || '',
+            const payload = {
+                baseline_id: parseInt(document.getElementById('baselineSelect').value),
+                monitor_type: document.getElementById('monitorType').value,
+                description: document.getElementById('sessionDescription').value,
                 user_id: localStorage.getItem('user_id')
             };
 
-            const apiToken = localStorage.getItem('api_token');
-            const modal = form.closest('.modal-overlay');
+            try {
+                const apiToken = localStorage.getItem('api_token');
+                const response = await fetch(API_START_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiToken
+                    },
+                    body: JSON.stringify(payload)
+                });
 
-            // Call MonitoringSessionService (with trailing slash as per URL pattern)
-            fetch(API_START_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + apiToken
-                },
-                body: JSON.stringify(startSessionData)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to start monitoring session');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Close modal
-                if (modal) {
-                    modal.remove();
-                }
-                // Refresh the page to show sessions
+                if (!response.ok) throw new Error('Failed to start session');
+                const data = await response.json();
+
+                alert(data.message || 'Monitoring session started successfully');
+                closeStartModal();
                 loadMonitoringSessions();
-                alert('Monitoring session started successfully');
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error:', error);
-                showError('Error starting monitoring session: ' + error.message);
-            });
+                showError('Failed to start session: ' + error.message);
+            }
         }
 
-        // Show Error
+        // Close Modals
+        function closeStartModal() {
+            document.getElementById('startModal').classList.remove('active');
+            document.getElementById('startForm').reset();
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').classList.remove('active');
+        }
+
+        // Helper Functions
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleString();
+        }
+
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 5000);
         }
 
-        // Logout
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
                 localStorage.clear();
